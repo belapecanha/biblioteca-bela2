@@ -1,0 +1,17 @@
+node_modules/
+out/
+dist/
+release/
+test-results/
+playwright-report/
+*.log
+*.tsbuildinfo
+Thumbs.db
+.env
+.env.local
+
+# banco e capas de desenvolvimento nunca entram no repositório
+dev-data/
+*.db
+*.db-shm
+*.db-wal

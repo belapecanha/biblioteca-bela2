@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "paths": { "@shared/*": ["./src/shared/*"] }
+  },
+  "include": ["src/main/**/*", "src/preload/**/*", "src/shared/**/*", "testes/**/*", "*.config.ts"]
+}

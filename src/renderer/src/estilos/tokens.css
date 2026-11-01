@@ -1,0 +1,57 @@
+:root {
+  color-scheme: dark;
+  --noite: #141c22;
+  --fundo: #1c262e;
+  --cartao: #25323c;
+  --cartao-alto: #33404b;
+  --linha: #3d4d5a;
+  --borda-campo: #566876;
+  --texto: #f3e9dc;
+  --texto-suave: #b9c3c9;
+  --destaque: #d9825a;
+  --destaque-claro: #e9a07b;
+  --sobre-destaque: #1c120b;
+  --grafico-roxo: #a958d8;
+  --grafico-azul: #2e9ac4;
+  --grafico-dourado: #b28a1e;
+  --fonte-titulo: 'Cormorant Garamond', serif;
+  --fonte-texto: 'DM Sans', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font: 400 15px/1.5 var(--fonte-texto);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.inicio {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.inicio h1 {
+  font-size: 64px;
+  font-style: italic;
+}
+
+.inicio p {
+  margin: 0;
+  color: var(--texto-suave);
+}

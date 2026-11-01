@@ -1,0 +1,1120 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "019633ca-72be-4869-a896-c04f617f6495",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "autores": {
+      "name": "autores",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pais": {
+          "name": "pais",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "autores_nome_unique": {
+          "name": "autores_nome_unique",
+          "columns": [
+            "nome"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "citacoes": {
+      "name": "citacoes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "livro_id": {
+          "name": "livro_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "texto": {
+          "name": "texto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pagina": {
+          "name": "pagina",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "idx_citacoes_livro": {
+          "name": "idx_citacoes_livro",
+          "columns": [
+            "livro_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "citacoes_livro_id_livros_id_fk": {
+          "name": "citacoes_livro_id_livros_id_fk",
+          "tableFrom": "citacoes",
+          "tableTo": "livros",
+          "columnsFrom": [
+            "livro_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "classificacoes": {
+      "name": "classificacoes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ordem": {
+          "name": "ordem",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_classificacao_unica": {
+          "name": "idx_classificacao_unica",
+          "columns": [
+            "tipo",
+            "nome"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "configuracoes": {
+      "name": "configuracoes",
+      "columns": {
+        "chave": {
+          "name": "chave",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "valor": {
+          "name": "valor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "editoras": {
+      "name": "editoras",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pais": {
+          "name": "pais",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "editoras_nome_unique": {
+          "name": "editoras_nome_unique",
+          "columns": [
+            "nome"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "fila_meta": {
+      "name": "fila_meta",
+      "columns": {
+        "livro_id": {
+          "name": "livro_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "posicao": {
+          "name": "posicao",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fila_meta_livro_id_livros_id_fk": {
+          "name": "fila_meta_livro_id_livros_id_fk",
+          "tableFrom": "fila_meta",
+          "tableTo": "livros",
+          "columnsFrom": [
+            "livro_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "leituras": {
+      "name": "leituras",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "livro_id": {
+          "name": "livro_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "formato": {
+          "name": "formato",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "data_inicio": {
+          "name": "data_inicio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "data_fim": {
+          "name": "data_fim",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ano_fim": {
+          "name": "ano_fim",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "precisao_fim": {
+          "name": "precisao_fim",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "nota": {
+          "name": "nota",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "resenha": {
+          "name": "resenha",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "idx_leituras_livro": {
+          "name": "idx_leituras_livro",
+          "columns": [
+            "livro_id"
+          ],
+          "isUnique": false
+        },
+        "idx_leituras_fim": {
+          "name": "idx_leituras_fim",
+          "columns": [
+            "data_fim"
+          ],
+          "isUnique": false
+        },
+        "idx_leituras_ano": {
+          "name": "idx_leituras_ano",
+          "columns": [
+            "ano_fim"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "leituras_livro_id_livros_id_fk": {
+          "name": "leituras_livro_id_livros_id_fk",
+          "tableFrom": "leituras",
+          "tableTo": "livros",
+          "columnsFrom": [
+            "livro_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "nota_meia_estrela": {
+          "name": "nota_meia_estrela",
+          "value": "\"leituras\".\"nota\" IS NULL OR (\"leituras\".\"nota\" BETWEEN 0.5 AND 5 AND \"leituras\".\"nota\" * 2 = CAST(\"leituras\".\"nota\" * 2 AS INTEGER))"
+        },
+        "data_coerente": {
+          "name": "data_coerente",
+          "value": "(\"leituras\".\"precisao_fim\" IS NULL AND \"leituras\".\"data_fim\" IS NULL AND \"leituras\".\"ano_fim\" IS NULL) OR (\"leituras\".\"precisao_fim\" = 'dia' AND \"leituras\".\"data_fim\" IS NOT NULL) OR (\"leituras\".\"precisao_fim\" = 'ano' AND \"leituras\".\"data_fim\" IS NULL AND \"leituras\".\"ano_fim\" IS NOT NULL)"
+        }
+      }
+    },
+    "lista_livros": {
+      "name": "lista_livros",
+      "columns": {
+        "lista_id": {
+          "name": "lista_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "livro_id": {
+          "name": "livro_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "posicao": {
+          "name": "posicao",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_lista_livros_livro": {
+          "name": "idx_lista_livros_livro",
+          "columns": [
+            "livro_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lista_livros_lista_id_listas_id_fk": {
+          "name": "lista_livros_lista_id_listas_id_fk",
+          "tableFrom": "lista_livros",
+          "tableTo": "listas",
+          "columnsFrom": [
+            "lista_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "lista_livros_livro_id_livros_id_fk": {
+          "name": "lista_livros_livro_id_livros_id_fk",
+          "tableFrom": "lista_livros",
+          "tableTo": "livros",
+          "columnsFrom": [
+            "livro_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "lista_livros_lista_id_livro_id_pk": {
+          "columns": [
+            "lista_id",
+            "livro_id"
+          ],
+          "name": "lista_livros_lista_id_livro_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "listas": {
+      "name": "listas",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "descricao": {
+          "name": "descricao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ordenada": {
+          "name": "ordenada",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "listas_nome_unique": {
+          "name": "listas_nome_unique",
+          "columns": [
+            "nome"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "livro_autores": {
+      "name": "livro_autores",
+      "columns": {
+        "livro_id": {
+          "name": "livro_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "autor_id": {
+          "name": "autor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "papel": {
+          "name": "papel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'autor'"
+        },
+        "ordem": {
+          "name": "ordem",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "idx_livro_autores_autor": {
+          "name": "idx_livro_autores_autor",
+          "columns": [
+            "autor_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "livro_autores_livro_id_livros_id_fk": {
+          "name": "livro_autores_livro_id_livros_id_fk",
+          "tableFrom": "livro_autores",
+          "tableTo": "livros",
+          "columnsFrom": [
+            "livro_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "livro_autores_autor_id_autores_id_fk": {
+          "name": "livro_autores_autor_id_autores_id_fk",
+          "tableFrom": "livro_autores",
+          "tableTo": "autores",
+          "columnsFrom": [
+            "autor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "livro_autores_livro_id_autor_id_papel_pk": {
+          "columns": [
+            "livro_id",
+            "autor_id",
+            "papel"
+          ],
+          "name": "livro_autores_livro_id_autor_id_papel_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "livro_classificacoes": {
+      "name": "livro_classificacoes",
+      "columns": {
+        "livro_id": {
+          "name": "livro_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "classificacao_id": {
+          "name": "classificacao_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ordem": {
+          "name": "ordem",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "idx_livro_classificacoes_classificacao": {
+          "name": "idx_livro_classificacoes_classificacao",
+          "columns": [
+            "classificacao_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "livro_classificacoes_livro_id_livros_id_fk": {
+          "name": "livro_classificacoes_livro_id_livros_id_fk",
+          "tableFrom": "livro_classificacoes",
+          "tableTo": "livros",
+          "columnsFrom": [
+            "livro_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "livro_classificacoes_classificacao_id_classificacoes_id_fk": {
+          "name": "livro_classificacoes_classificacao_id_classificacoes_id_fk",
+          "tableFrom": "livro_classificacoes",
+          "tableTo": "classificacoes",
+          "columnsFrom": [
+            "classificacao_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "livro_classificacoes_livro_id_classificacao_id_pk": {
+          "columns": [
+            "livro_id",
+            "classificacao_id"
+          ],
+          "name": "livro_classificacoes_livro_id_classificacao_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "livros": {
+      "name": "livros",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "goodreads_id": {
+          "name": "goodreads_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "titulo": {
+          "name": "titulo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "titulo_original": {
+          "name": "titulo_original",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "isbn10": {
+          "name": "isbn10",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "isbn13": {
+          "name": "isbn13",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "editora_id": {
+          "name": "editora_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "serie_id": {
+          "name": "serie_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "volume": {
+          "name": "volume",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'livro'"
+        },
+        "formato": {
+          "name": "formato",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "paginas": {
+          "name": "paginas",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "paginas_estimadas": {
+          "name": "paginas_estimadas",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "ano_edicao": {
+          "name": "ano_edicao",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ano_publicacao": {
+          "name": "ano_publicacao",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "idioma": {
+          "name": "idioma",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sinopse": {
+          "name": "sinopse",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "capa_arquivo": {
+          "name": "capa_arquivo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "miniatura_arquivo": {
+          "name": "miniatura_arquivo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cor_principal": {
+          "name": "cor_principal",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cor_destaque_1": {
+          "name": "cor_destaque_1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cor_destaque_2": {
+          "name": "cor_destaque_2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cor_texto": {
+          "name": "cor_texto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'quero_ler'"
+        },
+        "posse": {
+          "name": "posse",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "favorito_posicao": {
+          "name": "favorito_posicao",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notas_privadas": {
+          "name": "notas_privadas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "atualizado_em": {
+          "name": "atualizado_em",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "livros_goodreads_id_unique": {
+          "name": "livros_goodreads_id_unique",
+          "columns": [
+            "goodreads_id"
+          ],
+          "isUnique": true
+        },
+        "idx_livros_status": {
+          "name": "idx_livros_status",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        },
+        "idx_livros_isbn13": {
+          "name": "idx_livros_isbn13",
+          "columns": [
+            "isbn13"
+          ],
+          "isUnique": false
+        },
+        "idx_livros_serie": {
+          "name": "idx_livros_serie",
+          "columns": [
+            "serie_id"
+          ],
+          "isUnique": false
+        },
+        "idx_livros_favorito": {
+          "name": "idx_livros_favorito",
+          "columns": [
+            "favorito_posicao"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "livros_editora_id_editoras_id_fk": {
+          "name": "livros_editora_id_editoras_id_fk",
+          "tableFrom": "livros",
+          "tableTo": "editoras",
+          "columnsFrom": [
+            "editora_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "livros_serie_id_series_id_fk": {
+          "name": "livros_serie_id_series_id_fk",
+          "tableFrom": "livros",
+          "tableTo": "series",
+          "columnsFrom": [
+            "serie_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "favorito_valido": {
+          "name": "favorito_valido",
+          "value": "\"livros\".\"favorito_posicao\" IS NULL OR \"livros\".\"favorito_posicao\" BETWEEN 1 AND 4"
+        }
+      }
+    },
+    "metas": {
+      "name": "metas",
+      "columns": {
+        "ano": {
+          "name": "ano",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "livros": {
+          "name": "livros",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "meta_positiva": {
+          "name": "meta_positiva",
+          "value": "\"metas\".\"livros\" > 0"
+        }
+      }
+    },
+    "progresso": {
+      "name": "progresso",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "leitura_id": {
+          "name": "leitura_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "data": {
+          "name": "data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pagina": {
+          "name": "pagina",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_progresso_leitura": {
+          "name": "idx_progresso_leitura",
+          "columns": [
+            "leitura_id"
+          ],
+          "isUnique": false
+        },
+        "idx_progresso_data": {
+          "name": "idx_progresso_data",
+          "columns": [
+            "data"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "progresso_leitura_id_leituras_id_fk": {
+          "name": "progresso_leitura_id_leituras_id_fk",
+          "tableFrom": "progresso",
+          "tableTo": "leituras",
+          "columnsFrom": [
+            "leitura_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "pagina_valida": {
+          "name": "pagina_valida",
+          "value": "\"progresso\".\"pagina\" >= 0"
+        }
+      }
+    },
+    "series": {
+      "name": "series",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "total_volumes": {
+          "name": "total_volumes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "series_nome_unique": {
+          "name": "series_nome_unique",
+          "columns": [
+            "nome"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

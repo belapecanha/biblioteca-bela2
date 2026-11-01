@@ -1,0 +1,42 @@
+{
+  "name": "biblioteca-bela",
+  "productName": "Biblioteca Bela",
+  "version": "0.1.0",
+  "description": "Catálogo pessoal de leitura",
+  "main": "./out/main/index.js",
+  "author": "Isabela",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron-vite preview",
+    "postinstall": "electron-builder install-app-deps",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "db:gerar": "drizzle-kit generate",
+    "test": "node scripts/testar.mjs",
+    "test:app": "npm run build && playwright test"
+  },
+  "dependencies": {
+    "@fontsource/cormorant-garamond": "^5.2.8",
+    "@fontsource/dm-sans": "^5.2.8",
+    "better-sqlite3": "^13.0.3",
+    "drizzle-orm": "^0.45.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "drizzle-kit": "^0.31.10",
+    "electron": "^44.4.3",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "typescript": "^6.0.3",
+    "vite": "^7.3.6",
+    "vitest": "^4.0.0"
+  }
+}
