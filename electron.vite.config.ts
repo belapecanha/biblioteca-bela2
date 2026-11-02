@@ -28,6 +28,9 @@ export default defineConfig({
   },
   renderer: {
     root: 'src/renderer',
+    // electron-vite usa a porta configurada na URL enviada ao Electron.
+    // Se o Vite trocar de porta, a janela pode carregar um servidor antigo.
+    server: { strictPort: true },
     resolve: { alias: compartilhado },
     plugins: [react()]
   }

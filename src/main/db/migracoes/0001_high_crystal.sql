@@ -1,0 +1,1 @@
+ALTER TABLE `livros` ADD `origem` text DEFAULT 'manual' NOT NULL;

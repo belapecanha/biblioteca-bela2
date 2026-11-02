@@ -37,21 +37,3 @@ h3 {
   font-weight: 600;
   line-height: 1.1;
 }
-
-.inicio {
-  min-height: 100vh;
-  display: grid;
-  place-content: center;
-  gap: 8px;
-  text-align: center;
-}
-
-.inicio h1 {
-  font-size: 64px;
-  font-style: italic;
-}
-
-.inicio p {
-  margin: 0;
-  color: var(--texto-suave);
-}

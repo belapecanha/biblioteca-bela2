@@ -35,6 +35,10 @@ export const livros = sqliteTable(
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     goodreadsId: text('goodreads_id').unique(),
+    // Livros importados têm data de entrada pouco confiável, então ficam fora do tempo de fila.
+    origem: text('origem', { enum: ['goodreads', 'banco_antigo', 'manual'] })
+      .notNull()
+      .default('manual'),
     titulo: text('titulo').notNull(),
     tituloOriginal: text('titulo_original'),
     isbn10: text('isbn10'),

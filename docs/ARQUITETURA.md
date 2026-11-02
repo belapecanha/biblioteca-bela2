@@ -11,7 +11,7 @@ App pessoal de catálogo de leitura para Windows. Roda só no computador da dona
 | Dados | `%APPDATA%\biblioteca-bela`, com `biblioteca.db`, `capas\` e `miniaturas\` |
 | Banco antigo | Lido uma única vez na importação, nunca alterado |
 | Busca de livros | Google Books, chamado pelo processo principal |
-| Chave do Google | Colada nas Configurações e criptografada com `safeStorage` |
+| Chave do Google | `GOOGLE_BOOKS_API_KEY` no `.env` da raiz do projeto, fora do git; no app instalado, na pasta de dados |
 | Backup | Automático ao abrir, em pasta escolhida, guardando os últimos 10. Backup completo com capas é separado |
 | Tema | Só escuro na primeira versão |
 | Fora da primeira versão | Celular, sincronização, tema claro, atualização automática, assinatura do instalador |
