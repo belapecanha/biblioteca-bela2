@@ -9,6 +9,7 @@ import { resolverCapa } from './capas'
 import { definirClassificacoes, definirNota, definirPosse, definirStatus, listarLivros, obterLivro } from './livros'
 import { abrirBanco, type Banco } from './db/conexao'
 import { bloquearBiblioteca } from './db/bloqueio'
+import { backupAoAbrir } from './db/backup-automatico'
 import { classificacoes, livros } from './db/esquema'
 import { encontrarDuplicados, salvarNotas } from './registro'
 import { salvarRegistro, trocarCapa } from './registro-capas'
@@ -88,6 +89,8 @@ function iniciar(): void {
   const pastaMiniaturas = join(pastaDados, 'miniaturas')
   for (const pasta of [pastaDados, pastaCapas, pastaMiniaturas]) mkdirSync(pasta, { recursive: true })
 
+  // A cópia vem antes das migrações: se uma atualização mudar o banco, a versão anterior fica guardada.
+  backupAoAbrir(pastaDados, app.getVersion())
   banco = abrirBanco(join(pastaDados, 'biblioteca.db'), join(__dirname, 'migracoes'))
   arquivos = servicoArquivos(banco, pastaDados)
 

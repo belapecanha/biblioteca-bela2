@@ -15,6 +15,7 @@
     "db:gerar": "drizzle-kit generate",
     "test": "node scripts/testar.mjs",
     "test:app": "npm run build && playwright test",
+    "instalador": "npm run typecheck && npm run build && electron-builder --win",
     "importar": "node scripts/importar.mjs"
   },
   "dependencies": {

@@ -1,0 +1,38 @@
+# Instalador do Windows. Os dados ficam em %APPDATA%\biblioteca-bela, fora da pasta do programa:
+# instalar uma versão nova por cima ou desinstalar não toca na biblioteca.
+appId: com.bibliotecabela.app
+productName: Biblioteca Bela
+copyright: Isabela
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**
+  - package.json
+  - '!**/*.map'
+# Módulos nativos precisam ficar fora do asar para o Windows carregar as DLLs.
+asarUnpack:
+  - node_modules/better-sqlite3/**
+  - node_modules/sharp/**
+  - node_modules/@img/**
+win:
+  target:
+    - target: nsis
+      arch: x64
+  icon: build/icon.png
+  # Sem certificado de assinatura: o Windows mostra um aviso na primeira instalação.
+  signAndEditExecutable: true
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  # Nunca apagar a biblioteca ao desinstalar.
+  deleteAppDataOnUninstall: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Biblioteca Bela
+  artifactName: Biblioteca-Bela-Setup-${version}.${ext}
+  installerLanguages:
+    - pt_BR
+  language: '1046'
+  runAfterFinish: true

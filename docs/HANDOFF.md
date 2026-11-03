@@ -44,7 +44,6 @@ O momento original em que o banco ficou vazio e a origem do WAL inválido relata
 
 ## 3. Pendências de dados
 
-- **Commit:** registrar a etapa 6; as etapas anteriores já estão em `15a49d2`.
 - **Capas:** faltam 46. A lista está em `dados/relatorio_importacao.md`. A dona vai fornecer as imagens.
 - **Sinopses:** 111 livros estão sem sinopse, e parte das existentes está em inglês.
 - **Status a confirmar:** *A Court of Silver Flames* está em Quero ler no Goodreads e como lendo no app antigo. Foi mantido Quero ler.
@@ -95,11 +94,16 @@ O momento original em que o banco ficou vazio e a origem do WAL inválido relata
 - **Validação da etapa 6:** 66 testes unitários e 15 testes do app passaram; build e checagem de tipos também passaram. A regressão inclui a captura da retrospectiva, cadastro, diário, estante, editoras/países e todos os novos fluxos. Importação e restauração foram exercitadas somente em bibliotecas temporárias.
 - **Conferência real:** app aberto com `npm run dev`, com 220 livros, 21 listas e quatro favoritos preservados; Perfil, Listas e Configurações abriram sem erros de interface. Ficou aberto no Perfil. A meta editada em Estatísticas também atualiza o Perfil ao voltar, sem recarregar.
 
-### Etapa 7: Acabamento
+### Etapa 7: Acabamento — em andamento
 
-- Backup automático ao abrir, em pasta escolhida, com rotação dos últimos 10. O backup manual completo e a restauração já estão implementados na etapa 6; falta definir a rotina automática e um formato leve separado, se necessário.
-- Instalador do Windows, ainda nunca testado, conferindo `better-sqlite3`, `sharp` e as migrações empacotadas.
-- Testes finais e desempenho da Estante com todos os livros.
+- **Instalador:** `npm run instalador` confere os tipos, gera o build e cria `release\Biblioteca-Bela-Setup-<versão>.exe` (NSIS, por usuário, com escolha de pasta e atalhos). Configuração em `electron-builder.yml`; ícone em `build/icon.svg` e `build/icon.png`. Sem certificado de assinatura: o Windows mostra o aviso do SmartScreen ("Mais informações" → "Executar assim mesmo") na primeira instalação.
+- **Dados fora do programa:** a biblioteca continua em `%APPDATA%\biblioteca-bela`, fixa em `src/main/index.ts`, igual no `npm run dev` e no instalado. Instalar uma versão nova por cima troca só o programa; o desinstalador está com `deleteAppDataOnUninstall: false`. Os dois não podem ficar abertos juntos: o bloqueio da biblioteca impede.
+- **Chave do Google no instalado:** o app instalado lê `%APPDATA%\biblioteca-bela\.env`. O `.env` do projeto foi copiado para lá.
+- **Backup automático ao abrir** (`src/main/db/backup-automatico.ts`): antes das migrações, roda `quick_check`; se o banco estiver danificado, não abre e mostra onde estão as cópias. Senão, guarda uma cópia do banco em `backupsutomaticos` (uma por dia e outra sempre que a versão muda), mantendo as 10 mais novas. Só o banco: capas e miniaturas nunca são mudadas por atualização. O backup completo `.bela` continua em Configurações.
+- **Módulos nativos:** `better-sqlite3`, `sharp` e `@img` ficam fora do asar (`asarUnpack`). As migrações vão em `out/main/migracoes`, dentro do pacote.
+- **Validação:** `testes/app/empacotado.spec.ts` abre `release\win-unpacked` com uma cópia da biblioteca real e confere app empacotado, número de livros, lombadas com capa, backup ao abrir e troca de capa com `sharp`. É pulado se o instalador não foi gerado. `testes/unidade/backup-automatico.test.ts` cobre cópia, rotação e banco danificado.
+- **Como atualizar depois:** mudar e testar no projeto, aumentar `version` no `package.json`, rodar `npm run instalador` e instalar por cima. Mudanças de banco sempre por migração nova (`npm run db:gerar`), nunca editando as antigas.
+- **Falta:** assinatura do instalador (opcional), testes finais e desempenho da Estante com todos os livros.
 
 ## 5. Como rodar
 
