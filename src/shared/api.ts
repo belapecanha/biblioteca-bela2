@@ -45,6 +45,8 @@ export interface LivroResumo {
   capa: string | null
   miniatura: string | null
   corPrincipal: string | null
+  /** Até duas cores vivas da capa, usadas nos detalhes da lombada. */
+  coresDestaque: string[]
   corTexto: string | null
   generos: string[]
   temas: string[]
@@ -157,6 +159,25 @@ export interface LivroAnalise extends LivroResumo {
   leituras: LeituraAnalise[]
 }
 export interface BaseAnalise { livros: LivroAnalise[]; metas: Record<number, number> }
+export interface PerfilDados { nome: string; frase: string; foto: string | null; topo: string | null }
+export interface PerfilEdicao { nome: string; frase: string; foto?: number[] | null; topo?: number[] | null }
+export interface ListaDados { id?: number; nome: string; descricao: string | null; ordenada: boolean }
+export interface ListaResumo extends Required<ListaDados> { total: number; capas: LivroResumo[] }
+export interface ListaDetalhe extends ListaResumo { livros: LivroResumo[] }
+export interface PainelPerfil {
+  perfil: PerfilDados
+  favoritos: LivroResumo[]
+  lendo: { livro: LivroResumo; leituraId: number; pagina: number | null }[]
+  fila: LivroResumo[]
+  numeros: { lidos: number; noAno: number; paginas: number; series: number; listas: number }
+  meta: number | null
+  atividade: { livro: LivroResumo; data: string | null; ano: number | null; nota: number | null }[]
+  series: { id: number; nome: string; lidos: number; cadastrados: number; total: number | null }[]
+}
+export interface PendenciaDados { codigo: string; rotulo: string; livros: LivroResumo[] }
+export interface PreviaImportacao { token: string; total: number; novos: number; repetidos: number; invalidos: number; titulos: string[]; avisos: string[] }
+export interface PreviaRestauracao { token: string; livros: number; leituras: number; imagens: number; nome: string }
+export interface ResultadoImportacao { adicionados: number; ignorados: number; backup: string }
 
 export interface ApiBela {
   estado: () => Promise<EstadoApp>
@@ -189,5 +210,30 @@ export interface ApiBela {
     base: () => Promise<BaseAnalise>
     definirMeta: (ano: number, livros: number | null) => Promise<void>
     salvarImagem: (ano: number) => Promise<string | null>
+  }
+  perfil: {
+    dados: () => Promise<PerfilDados>
+    painel: (ano: number) => Promise<PainelPerfil>
+    salvar: (dados: PerfilEdicao) => Promise<void>
+    favoritos: (ids: number[]) => Promise<void>
+    fila: (ids: number[]) => Promise<void>
+    pendencias: () => Promise<PendenciaDados[]>
+  }
+  listas: {
+    listar: () => Promise<ListaResumo[]>
+    obter: (id: number) => Promise<ListaDetalhe | null>
+    salvar: (dados: ListaDados) => Promise<number>
+    adicionar: (id: number, livros: number[]) => Promise<void>
+    removerLivro: (id: number, livroId: number) => Promise<void>
+    ordenar: (id: number, livros: number[]) => Promise<void>
+    excluir: (id: number) => Promise<void>
+  }
+  arquivos: {
+    prepararCsv: (csv: string) => Promise<PreviaImportacao>
+    importarCsv: (token: string) => Promise<ResultadoImportacao>
+    exportarCsv: () => Promise<string | null>
+    backup: () => Promise<string | null>
+    prepararRestauracao: () => Promise<PreviaRestauracao | null>
+    restaurar: (token: string) => Promise<{ backup: string }>
   }
 }

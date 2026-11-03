@@ -49,9 +49,10 @@ function normalizar(s: string): string { return s.normalize('NFD').replace(/[\u0
 export function encontrarDuplicados(banco: Banco, entrada: DadosLivro): LivroResumo[] {
   const d = validarLivro(entrada)
   const autores = d.colaboradores.filter((c) => c.papel === 'autor').map((c) => normalizar(c.nome))
+  const isbnsPorId = new Map((banco.sqlite.prepare('SELECT id, isbn10, isbn13 FROM livros').all() as { id: number; isbn10: string | null; isbn13: string | null }[]).map((l) => [l.id, l]))
   return listarLivros(banco).filter((l) => {
     if (l.id === d.id) return false
-    const isbns = banco.sqlite.prepare('SELECT isbn10, isbn13 FROM livros WHERE id = ?').get(l.id) as { isbn10: string | null; isbn13: string | null }
+    const isbns = isbnsPorId.get(l.id)!
     return !!((d.isbn13 && isbns.isbn13 === d.isbn13) || (d.isbn10 && isbns.isbn10 === d.isbn10) ||
       (normalizar(l.titulo) === normalizar(d.titulo) && l.autores.some((a) => autores.includes(normalizar(a.nome)))))
   })

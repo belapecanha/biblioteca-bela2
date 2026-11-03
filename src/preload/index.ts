@@ -32,6 +32,31 @@ const api: ApiBela = {
     base: () => ipcRenderer.invoke('analise:base'),
     definirMeta: (ano, livros) => ipcRenderer.invoke('analise:meta', ano, livros),
     salvarImagem: (ano) => ipcRenderer.invoke('analise:salvar-imagem', ano)
+  },
+  perfil: {
+    dados: () => ipcRenderer.invoke('perfil:dados'),
+    painel: (ano) => ipcRenderer.invoke('perfil:painel', ano),
+    salvar: (dados) => ipcRenderer.invoke('perfil:salvar', dados),
+    favoritos: (ids) => ipcRenderer.invoke('perfil:favoritos', ids),
+    fila: (ids) => ipcRenderer.invoke('perfil:fila', ids),
+    pendencias: () => ipcRenderer.invoke('perfil:pendencias')
+  },
+  listas: {
+    listar: () => ipcRenderer.invoke('listas:listar'),
+    obter: (id) => ipcRenderer.invoke('listas:obter', id),
+    salvar: (dados) => ipcRenderer.invoke('listas:salvar', dados),
+    adicionar: (id, livros) => ipcRenderer.invoke('listas:adicionar', id, livros),
+    removerLivro: (id, livroId) => ipcRenderer.invoke('listas:remover', id, livroId),
+    ordenar: (id, livros) => ipcRenderer.invoke('listas:ordenar', id, livros),
+    excluir: (id) => ipcRenderer.invoke('listas:excluir', id)
+  },
+  arquivos: {
+    prepararCsv: (csv) => ipcRenderer.invoke('arquivos:preparar-csv', csv),
+    importarCsv: (token) => ipcRenderer.invoke('arquivos:importar-csv', token),
+    exportarCsv: () => ipcRenderer.invoke('arquivos:exportar-csv'),
+    backup: () => ipcRenderer.invoke('arquivos:backup'),
+    prepararRestauracao: () => ipcRenderer.invoke('arquivos:preparar-restauracao'),
+    restaurar: (token) => ipcRenderer.invoke('arquivos:restaurar', token)
   }
 }
 

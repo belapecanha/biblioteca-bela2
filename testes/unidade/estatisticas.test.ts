@@ -15,7 +15,7 @@ function livro(campos: Partial<LivroAnalise> = {}): LivroAnalise {
   const id = proximo++
   return {
     id, titulo: `Livro ${id}`, tituloOriginal: null, autores: [{ id: 1, nome: 'Autora' }], editora: null, paisEditora: 'Brasil', serie: null, volume: null, tipo: 'livro', formato: 'fisico', paginas: 100, paginasEstimadas: false,
-    status: 'lido', posse: null, favorito: false, nota: 4, anoLido: 2025, dataLida: null, capa: null, miniatura: null, corPrincipal: null, corTexto: null, generos: ['Romance'], temas: [], moods: ['Leve'],
+    status: 'lido', posse: null, favorito: false, nota: 4, anoLido: 2025, dataLida: null, capa: null, miniatura: null, corPrincipal: null, coresDestaque: [], corTexto: null, generos: ['Romance'], temas: [], moods: ['Leve'],
     anoPublicacao: 2015, pais: 'Brasil', cor1: null, cor2: null, origem: 'goodreads', criadoEm: '2020-01-01 00:00:00', primeiroInicio: null, leituras: [leitura()], ...campos
   }
 }

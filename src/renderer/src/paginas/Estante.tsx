@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import type { LivroResumo, Status } from '@shared/api'
 import { Estado } from '../componentes/Capa'
@@ -26,9 +26,92 @@ const LARGURA_CARTAO = 300
 const ESCALA_CAPA = 1.2
 
 function medidas(l: LivroResumo) {
-  const largura = Math.max(20, Math.min(52, Math.round(13 + (l.paginas ?? 250) / 30)))
-  const altura = 166 + (numeroDoTexto(l.titulo) % 42)
+  // Escala única: base de 8px e mais 5px a cada 100 páginas (400 → 28px, 700 → 43px).
+  // Os limites só seguram dados absurdos; nenhum livro real chega neles.
+  const largura = Math.max(10, Math.min(100, Math.round(8 + (l.paginas ?? 250) * 0.05)))
+  // Volumes da mesma série têm a mesma altura; só a grossura muda com as páginas.
+  const altura = 166 + (numeroDoTexto(l.serie ? `serie:${l.serie.id}` : l.titulo) % 42)
   return { largura, altura, larguraCapa: Math.round((altura * 2) / 3) }
+}
+
+const SEM_SIGLA = /^(editora|editorial|ediciones|edições|edicoes|publishing|publishers|books|press|livros|e|y|&|de|da|do|dos|das|the)$/i
+
+// Monograma da editora, como o logotipo no pé da lombada: "Galera Record" vira GR.
+function siglaEditora(nome: string): string {
+  const palavras = nome.replace(/\(.*?\)|[|.,]/g, ' ').split(/\s+/).filter(Boolean)
+  const uteis = palavras.filter((p) => !SEM_SIGLA.test(p))
+  return (uteis.length ? uteis : palavras).slice(0, 2).map((p) => [...p][0]).join('').toUpperCase()
+}
+
+// Lombada não tem espaço para subtítulo: "Heartstopper: Volume One" fica Heartstopper.
+// Com volume na série, o número vai à parte e sai do título.
+function tituloCurto(titulo: string, comVolume: boolean): string {
+  // O apóstrofo tipográfico fica em pé no texto vertical; o reto deita junto com as letras.
+  let curto = titulo.replace(/[’‘]/g, "'").replace(/\s*\(.*?\)\s*/g, ' ').split(/:\s| - | – /)[0].trim()
+  if (comVolume) curto = curto.replace(/[,.]?\s*(vol\.?|volume|volumen|v\.)\s*\d+([.,]\d+)?\s*$/i, '').trim()
+  return curto.length >= 3 ? curto : titulo
+}
+
+// O título nunca leva reticências: primeiro sai o autor; depois vale o que der a maior letra,
+// uma linha só ou o título quebrado em colunas; no limite saem também o número e o monograma.
+function ajustarTitulo(caixa: HTMLElement) {
+  const titulo = caixa.querySelector<HTMLElement>('.lb-titulo')
+  if (!titulo) return
+  const extras = (seletor: string) => caixa.querySelector<HTMLElement>(seletor)
+  const autor = extras('.lb-autor')
+  titulo.style.cssText = ''
+  for (const el of [autor, extras('.lb-volume'), extras('.lb-editora')]) if (el) el.style.display = ''
+  const cabe = () => titulo.scrollHeight <= titulo.clientHeight + 1 && titulo.scrollWidth <= titulo.clientWidth + 1
+  // Sobrenome que não cabe inteiro também sai, em vez de aparecer cortado.
+  if (autor && autor.scrollHeight > autor.clientHeight + 1) autor.style.display = 'none'
+  if (cabe()) return
+  if (autor) { autor.style.display = 'none'; if (cabe()) return }
+  const base = parseFloat(getComputedStyle(titulo).fontSize)
+  const maiorQueCabe = (minimo: number) => {
+    for (let f = base; f >= minimo; f -= 0.5) { titulo.style.fontSize = `${f}px`; if (cabe()) return f }
+    return null
+  }
+  const quebrar = (sim: boolean) => { titulo.style.whiteSpace = sim ? 'normal' : ''; titulo.style.lineHeight = sim ? '1.05' : '' }
+  const umaLinha = maiorQueCabe(8)
+  quebrar(true)
+  const emColunas = maiorQueCabe(5)
+  if (umaLinha !== null && (emColunas === null || emColunas <= umaLinha + 1.5)) { quebrar(false); titulo.style.fontSize = `${umaLinha}px`; return }
+  if (emColunas !== null) { titulo.style.fontSize = `${emColunas}px`; return }
+  for (const el of [extras('.lb-volume'), extras('.lb-editora')]) if (el) el.style.display = 'none'
+  if (maiorQueCabe(5) !== null) return
+  // Último recurso: o título ocupa a lombada inteira, sem moldura.
+  Object.assign(titulo.style, { margin: '0', padding: '0', border: '0', background: 'none' })
+  quebrar(false)
+  if (maiorQueCabe(5) !== null) return
+  quebrar(true)
+  if (maiorQueCabe(5) === null) titulo.style.fontSize = '5px'
+}
+
+// A lombada usa a beirada esquerda da capa, a que fica junto da lombada no livro de verdade.
+const imagemLombada = (l: LivroResumo) => l.miniatura ?? l.capa
+
+function Lombada({ livro, largura }: { livro: LivroResumo; largura: number }) {
+  const caixa = useRef<HTMLSpanElement>(null)
+  useLayoutEffect(() => {
+    const el = caixa.current
+    if (!el) return
+    ajustarTitulo(el)
+    let vivo = true
+    // A fonte do título pode chegar depois; mede de novo quando ela carrega.
+    void document.fonts.ready.then(() => { if (vivo) ajustarTitulo(el) })
+    return () => { vivo = false }
+  }, [livro.titulo, livro.volume, livro.autores, livro.editora, largura])
+  const autor = livro.autores[0]?.nome.trim().split(/\s+/).pop()
+  return (
+    <span ref={caixa} className={`lb${largura >= 34 ? ' lb-larga' : ''}`} aria-hidden="true">
+      {livro.volume !== null && <span className="lb-volume">{String(livro.volume).replace('.', ',')}</span>}
+      <span className="lb-faixa">
+        <span className="lb-titulo">{tituloCurto(livro.titulo, livro.volume !== null)}</span>
+        {autor && <span className="lb-autor">{autor}</span>}
+      </span>
+      {livro.editora && <span className="lb-editora">{siglaEditora(livro.editora.nome)}</span>}
+    </span>
+  )
 }
 
 interface Aberto {
@@ -147,14 +230,14 @@ export function Estante() {
                 >
                   <button
                     type="button"
-                    className="lombada"
+                    className={imagemLombada(l) ? 'lombada com-capa' : 'lombada'}
                     title={l.titulo}
                     aria-label={`${l.titulo}, de ${l.autores.map((a) => a.nome).join(', ')}`}
                     aria-expanded={estaAberto}
                     onClick={(e) => clicar(l, e)}
-                    style={{ background: cores.fundo, color: cores.texto }}
+                    style={{ backgroundColor: cores.fundo, color: cores.texto, '--f': cores.fundo, '--img': imagemLombada(l) ? `url("${imagemLombada(l)}")` : undefined } as CSSProperties}
                   >
-                    {l.titulo}
+                    <Lombada livro={l} largura={m.largura} />
                   </button>
                   {estaAberto && (
                     <div

@@ -61,7 +61,10 @@ function Painel({ base }: { base: BaseAnalise }) {
   const anoAtual = hoje.getFullYear()
   const salvarMeta = useMutation({
     mutationFn: (livros: number | null) => window.bela.analise.definirMeta(anoAtual, livros),
-    onSuccess: () => void cliente.invalidateQueries({ queryKey: ['livros', 'analise'] })
+    onSuccess: () => {
+      void cliente.invalidateQueries({ queryKey: ['livros', 'analise'] })
+      void cliente.invalidateQueries({ queryKey: ['perfil'] })
+    }
   })
   const a = ano ? Number(ano) : null
   const recorte = useMemo(() => filtrar(base.livros, f), [base, f])

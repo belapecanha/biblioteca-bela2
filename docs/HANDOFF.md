@@ -1,12 +1,12 @@
 # Handoff: Biblioteca Bela
 
-Estado em 1º de novembro de 2026. Decisões e modelo de dados estão em [ARQUITETURA.md](ARQUITETURA.md). O visual de referência está na [prancha](https://claude.ai/artifact/XTZRx9Fgc13wd2fzcTgamU).
+Estado em 2 de novembro de 2026. Decisões e modelo de dados estão em [ARQUITETURA.md](ARQUITETURA.md). O visual de referência está na [prancha](https://claude.ai/artifact/XTZRx9Fgc13wd2fzcTgamU).
 
 ## Resumo
 
-- Etapas 1 a 5 construídas: base, importação, consulta, registro de leituras e análise.
+- Etapas 1 a 6 construídas: base, importação, consulta, registro, análise e organização.
 - **Estante recuperada:** banco restaurado com 218 livros; recuperadas 172 capas e miniaturas. App e importador agora impedem acesso simultâneo à biblioteca.
-- Só a etapa 1 está em commit (`4990f46`). As etapas 2, 3, 4 e 5 estão sem commit na árvore de trabalho.
+- As etapas anteriores estão no commit `15a49d2`, após a base `4990f46`. A etapa 6 está na árvore de trabalho, sem commit.
 
 ## 1. Correção da estante vazia em `npm run dev`
 
@@ -44,7 +44,7 @@ O momento original em que o banco ficou vazio e a origem do WAL inválido relata
 
 ## 3. Pendências de dados
 
-- **Commit:** registrar as etapas 2, 3, 4 e 5 e a correção da estante; continuam sem commit.
+- **Commit:** registrar a etapa 6; as etapas anteriores já estão em `15a49d2`.
 - **Capas:** faltam 46. A lista está em `dados/relatorio_importacao.md`. A dona vai fornecer as imagens.
 - **Sinopses:** 111 livros estão sem sinopse, e parte das existentes está em inglês.
 - **Status a confirmar:** *A Court of Silver Flames* está em Quero ler no Goodreads e como lendo no app antigo. Foi mantido Quero ler.
@@ -55,7 +55,7 @@ O momento original em que o banco ficou vazio e a origem do WAL inválido relata
 - **Numeração de *Diário de Pilar*:** veio da memória e precisa ser conferida.
 - **Limpeza:** a pasta `%APPDATA%\Biblioteca Bela` (vazia de livros, criada por engano) e `%APPDATA%\biblioteca-bela\diagnostico-*` podem ser apagadas depois de resolver o bug. Confirmar antes.
 
-## 4. Etapa 4 concluída e próximas etapas
+## 4. Etapas implementadas e próximos passos
 
 ### Etapa 4: Registro — implementada
 
@@ -78,17 +78,26 @@ O momento original em que o banco ficou vazio e a origem do WAL inválido relata
 - **Retrospectiva:** 10 cartões por ano e parede de capas com losangos nas cores de cada capa, em `/retrospectiva`. Anos sem nota, data ou páginas mostram isso em vez de um valor inventado.
 - **Imagem:** modelo de 1080 × 1350 em `/retrospectiva/imagem/:ano`, salvo por `src/main/imagem-retrospectiva.ts`. Usa uma janela oculta e fotografa em faixas, juntadas com `sharp`: o Windows limita a janela à altura da tela, e tanto a emulação de tela quanto o `Page.captureScreenshot` falharam nos testes (este último derruba o app com a janela oculta).
 - **Cálculos:** funções puras em `src/shared/estatisticas.ts`. `testes/unidade/estatisticas.test.ts` confere os totais contra consultas diretas em uma cópia do banco real; `testes/app/analise.spec.ts` cobre filtros, meta, cartões, parede e imagem.
-- **Limites conhecidos:** o mapa (`mapa-mundi.json`) só tem nome nos 8 países atuais; um país novo aparece na lista, mas não pinta o mapa. O nome na imagem é fixo até o perfil da etapa 6. Mudanças em `src/main` e `src/preload` exigem reiniciar o `npm run dev`.
+- **Limites conhecidos:** o mapa (`mapa-mundi.json`) só tem nome nos 8 países atuais; um país novo aparece na lista, mas não pinta o mapa. O nome na imagem agora vem do perfil da etapa 6. Mudanças em `src/main` e `src/preload` exigem reiniciar o `npm run dev`.
 
-### Etapa 6: Organização
+### Etapa 6: Organização — implementada
 
-- **Perfil:** topo, números, 4 favoritos escolhidos, lendo agora, próximas leituras da meta, atividade recente e séries.
-- **Listas:** criar, abrir e adicionar, com escolha entre ordenada e não ordenada.
-- **Configurações:** perfil, foto, imagem do topo, importação, exportação, backup e pendências dos dados.
+- **Perfil:** nome, frase, foto e imagem do topo editáveis em Configurações. Sem imagem de topo, usa mosaico de capas. Exibe números reais, até quatro favoritos escolhidos e ordenados, leituras atuais com progresso por página, meta anual editável, fila ordenada das próximas leituras, atividade recente e séries iniciadas com volumes pendentes. O nome também aparece na imagem da retrospectiva.
+- **Favoritos e fila:** seleção no perfil e atalhos na ficha. Favoritos têm no máximo quatro posições; a fila só aceita livros em Quero ler e permite retirar ou reordenar. A visão do perfil mostra as cinco próximas leituras.
+- **Listas:** criar, abrir, editar nome/descrição/tipo, adicionar vários livros e retirar membros. Ordenadas têm botões Subir/Descer; não ordenadas aparecem por título. A ficha adiciona o livro a uma lista existente. Excluir uma lista pede confirmação na interface e preserva os livros.
+- **Configurações:** perfil e imagens, importação do Goodreads com prévia, exportação CSV, backup completo e restauração com confirmação. As pendências vêm do banco e dos arquivos reais, com links para as fichas. O `.env` e o comportamento da chave do Google foram mantidos.
+- **Goodreads:** lê CSV com aspas, vírgulas e quebras de linha; preserva datas exatas, notas (inclusive meia estrela) e resenhas. A prévia separa novos, repetidos e inválidos. A importação só acrescenta novos: não sobrescreve livros já cadastrados. Cria backup completo antes de gravar e confirma duplicados novamente na transação. Limites: 10 MB e 10.000 registros por arquivo. Capas e classificação dos livros novos podem ser completadas depois na ficha.
+- **CSV exportado:** uma linha por leitura (ou uma por livro sem leitura), incluindo notas privadas. É uma planilha de consulta, não o formato de restauração; para recuperar tudo, usar `.bela`. Valores que poderiam ser interpretados como fórmulas são neutralizados.
+- **Backup `.bela`:** arquivo compactado com snapshot SQLite consistente (inclui WAL), capas, miniaturas, perfil, listas e configurações do banco. Não inclui `.env`. Antes de restaurar, valida integridade, relações, tabelas, colunas e nomes dos arquivos. Guarda um backup anterior em `%APPDATA%\biblioteca-bela\backups` e restaura em transação na conexão atual, sem apagar/substituir o banco aberto. Imagens restauradas recebem nomes novos para não danificar as atuais se houver falha. Limites: aproximadamente 340 MB de dados/imagens, 256 MB compactados e 512 MB descompactados. Os backups de segurança antes de importar/restaurar não têm rotação automática nesta etapa.
+- **Implementação:** `src/main/organizacao.ts`, `csv.ts`, `backup.ts`, `arquivos.ts`; telas `Perfil.tsx`, `Listas.tsx` e `Configuracoes.tsx`. As escritas IPC são serializadas para imagens, importação e restauração não se sobreporem. Não foi necessária migração de banco.
+- **Testes:** `testes/unidade/organizacao.test.ts` cobre favoritos, fila, listas, imagens, séries, pendências, importação sem sobrescrever dados e backup/restauração com WAL. `testes/app/organizacao.spec.ts` cobre os três fluxos completos em pastas temporárias. Os testes antigos da estante agora usam o total real do banco em vez de 218 fixo; a biblioteca atual usada nas cópias de teste tem 220 livros.
+- **Referências visuais:** `docs/imagens/prototipo/perfil.png`, `listas.png` e `configuracoes.png`. Capturas em `test-results/etapa6-*.png`.
+- **Validação da etapa 6:** 66 testes unitários e 15 testes do app passaram; build e checagem de tipos também passaram. A regressão inclui a captura da retrospectiva, cadastro, diário, estante, editoras/países e todos os novos fluxos. Importação e restauração foram exercitadas somente em bibliotecas temporárias.
+- **Conferência real:** app aberto com `npm run dev`, com 220 livros, 21 listas e quatro favoritos preservados; Perfil, Listas e Configurações abriram sem erros de interface. Ficou aberto no Perfil. A meta editada em Estatísticas também atualiza o Perfil ao voltar, sem recarregar.
 
 ### Etapa 7: Acabamento
 
-- Backup em pasta escolhida, guardando os últimos 10, e backup completo com capas separado.
+- Backup automático ao abrir, em pasta escolhida, com rotação dos últimos 10. O backup manual completo e a restauração já estão implementados na etapa 6; falta definir a rotina automática e um formato leve separado, se necessário.
 - Instalador do Windows, ainda nunca testado, conferindo `better-sqlite3`, `sharp` e as migrações empacotadas.
 - Testes finais e desempenho da Estante com todos os livros.
 

@@ -23,6 +23,8 @@ interface LinhaLivro {
   capa_arquivo: string | null
   miniatura_arquivo: string | null
   cor_principal: string | null
+  cor_destaque_1: string | null
+  cor_destaque_2: string | null
   cor_texto: string | null
   nota: number | null
   data_lida: string | null
@@ -89,6 +91,7 @@ export function listarLivros({ sqlite }: Banco, filtroId?: number): LivroResumo[
       capa: l.capa_arquivo ? `capa://original/${encodeURIComponent(l.capa_arquivo)}` : null,
       miniatura: l.miniatura_arquivo ? `capa://miniatura/${encodeURIComponent(l.miniatura_arquivo)}` : null,
       corPrincipal: l.cor_principal,
+      coresDestaque: [l.cor_destaque_1, l.cor_destaque_2].filter((c): c is string => !!c),
       corTexto: l.cor_texto,
       generos: nomes('genero'),
       temas: nomes('tema'),

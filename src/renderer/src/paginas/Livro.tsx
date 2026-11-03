@@ -7,6 +7,7 @@ import { Estrelas } from '../componentes/Estrelas'
 import { NOME_STATUS, useAcoesLivro, useLivro, useLivros } from '../dados'
 import { RegistroLeitura } from '../componentes/RegistroLeitura'
 import { linkPais } from './Autoria'
+import { OrganizarLivro } from '../componentes/OrganizarLivro'
 
 const CLASSES: [TipoClassificacao, string, readonly string[], 'generos' | 'temas' | 'moods'][] = [
   ['genero', 'Gênero', GENEROS, 'generos'],
@@ -104,6 +105,7 @@ export function Livro() {
               <p className="erro peq sem-margem" role="alert">Não foi possível salvar. Tente de novo.</p>
             )}
           </div>
+          <OrganizarLivro key={id} livro={livro} />
         </aside>
         <div className="ficha-corpo">
           <section>

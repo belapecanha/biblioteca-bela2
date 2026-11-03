@@ -3,9 +3,8 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import type { BaseAnalise, LivroAnalise } from '@shared/api'
 import { calcular, cartoesRetrospectiva, comCapaPrimeiro, dec, filtrar, fmt, MESES_LONGOS } from '@shared/estatisticas'
 import { Capa, Estado } from '../componentes/Capa'
-import { coresDoLivro, mensagemErro, useAnalise } from '../dados'
+import { coresDoLivro, mensagemErro, useAnalise, usePerfilDados } from '../dados'
 
-const NOME_DA_DONA = 'Isabela'
 const anosDe = (base: BaseAnalise) => [...new Set(base.livros.flatMap((l) => l.leituras.flatMap((x) => (x.ano === null ? [] : [x.ano]))))].sort((a, b) => b - a)
 const inicial = (t: string) => t[0].toUpperCase() + t.slice(1)
 
@@ -63,6 +62,7 @@ function Cartoes({ base }: { base: BaseAnalise }) {
 
 export function ImagemRetrospectiva() {
   const consulta = useAnalise()
+  const perfil = usePerfilDados()
   const { ano: anoTexto } = useParams()
   const [parametros] = useSearchParams()
   const captura = parametros.get('captura') === '1'
@@ -71,7 +71,7 @@ export function ImagemRetrospectiva() {
   const S = useMemo(() => (consulta.data ? calcular(filtrar(consulta.data.livros, {}), ano) : null), [consulta.data, ano])
 
   useEffect(() => {
-    if (!S) return
+    if (!S || !perfil.data) return
     let ativo = true
     // A janela de captura só pode fotografar depois que fontes e capas terminarem de carregar.
     void (async () => {
@@ -80,9 +80,9 @@ export function ImagemRetrospectiva() {
       if (ativo) document.documentElement.dataset.imagemPronta = '1'
     })()
     return () => { ativo = false; delete document.documentElement.dataset.imagemPronta }
-  }, [S])
+  }, [S, perfil.data])
 
-  if (!S) return <div className="bb"><Estado carregando={consulta.isLoading} erro={consulta.isError} aoTentar={() => void consulta.refetch()} /></div>
+  if (!S || !perfil.data) return <div className="bb"><Estado carregando={consulta.isLoading || perfil.isLoading} erro={consulta.isError || perfil.isError} aoTentar={() => { void consulta.refetch(); void perfil.refetch() }} /></div>
   const melhor = [...S.meses].sort((a, b) => b.q - a.q)[0]
   const comCapa = S.R.filter((l) => l.miniatura)
   const fundo = comCapa.length ? Array.from({ length: 16 }, (_, k) => comCapa[k % comCapa.length]) : []
@@ -90,7 +90,7 @@ export function ImagemRetrospectiva() {
   const modelo = <div className="retro-imagem" data-testid="imagem-retrospectiva">
     <div className="retro-imagem-fundo" aria-hidden="true">{fundo.map((l, k) => <Capa key={k} livro={l} imediata />)}</div>
     <div className="retro-imagem-veu" aria-hidden="true" />
-    <header><p>Biblioteca Bela</p><p>{NOME_DA_DONA}</p></header>
+    <header><p>Biblioteca Bela</p><p>{perfil.data.nome}</p></header>
     <section className="retro-imagem-titulo"><p>Meu ano em livros, {ano}</p><h1>{S.n} {S.n === 1 ? 'livro' : 'livros'}</h1></section>
     <dl>
       <div><dd>{fmt(S.paginas)}</dd><dt>páginas</dt></div>

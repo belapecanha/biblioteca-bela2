@@ -2,6 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { LivroResumo, Posse, Status } from '@shared/api'
 import type { TipoClassificacao } from '@shared/classificacoes'
 
+function invalidarBiblioteca(cliente: ReturnType<typeof useQueryClient>) {
+  for (const chave of ['livros', 'livro', 'diario', 'perfil', 'listas', 'pendencias']) void cliente.invalidateQueries({ queryKey: [chave] })
+}
+export function usePerfilDados() { return useQuery({ queryKey: ['perfil', 'dados'], queryFn: () => window.bela.perfil.dados() }) }
+export function usePainelPerfil(ano = new Date().getFullYear()) { return useQuery({ queryKey: ['perfil', 'painel', ano], queryFn: () => window.bela.perfil.painel(ano) }) }
+export function useListas() { return useQuery({ queryKey: ['listas'], queryFn: () => window.bela.listas.listar() }) }
+
 export function useLivros() {
   return useQuery({ queryKey: ['livros'], queryFn: () => window.bela.livros.listar() })
 }
@@ -19,9 +26,7 @@ export function useAcoesLivro() {
   const cliente = useQueryClient()
   const opcoes = {
     onSuccess: () => {
-      void cliente.invalidateQueries({ queryKey: ['livros'] })
-      void cliente.invalidateQueries({ queryKey: ['livro'] })
-      void cliente.invalidateQueries({ queryKey: ['diario'] })
+      invalidarBiblioteca(cliente)
     }
   }
   return {
@@ -47,7 +52,7 @@ export function useAcoesLivro() {
 
 export function useSalvar<T, R>(acao: (dados: T) => Promise<R>) {
   const cliente = useQueryClient()
-  return useMutation({ mutationFn: acao, onSuccess: () => { void cliente.invalidateQueries({ queryKey: ['livros'] }); void cliente.invalidateQueries({ queryKey: ['livro'] }); void cliente.invalidateQueries({ queryKey: ['diario'] }) } })
+  return useMutation({ mutationFn: acao, onSuccess: () => invalidarBiblioteca(cliente) })
 }
 export function hoje(): string {
   const d = new Date()

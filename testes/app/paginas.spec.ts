@@ -17,6 +17,7 @@ test('ficha leva às páginas de editora e país, também encontradas na busca',
     const janela = await app.firstWindow()
     janela.on('pageerror', (e) => erros.push(e.message))
     await janela.setViewportSize({ width: 1400, height: 900 })
+    await expect(janela.getByRole('heading', { name: /Sua estante/ })).toBeVisible()
     const alvo = await janela.evaluate(async () => {
       const livros = await window.bela.livros.listar()
       const l = livros.find((x) => x.editora && x.paisEditora)!
@@ -32,7 +33,9 @@ test('ficha leva às páginas de editora e país, também encontradas na busca',
     await expect(janela.locator('.numeros .num').first()).toHaveText(String(alvo.daEditora))
     await janela.screenshot({ path: 'test-results/pagina-editora.png' })
 
-    await janela.goBack()
+    // O botão Voltar leva de volta à ficha do livro.
+    await janela.getByRole('button', { name: '← Voltar' }).click()
+    await expect(janela).toHaveURL(new RegExp(`#/livro/${alvo.id}$`))
     await janela.getByRole('link', { name: `País ${alvo.pais}` }).click()
     await expect(janela.getByRole('heading', { level: 1 })).toHaveText(alvo.pais)
     await expect(janela.locator('.numeros .num').first()).toHaveText(String(alvo.doPais))

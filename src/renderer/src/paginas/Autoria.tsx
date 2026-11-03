@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom'
 import type { Autor, LivroResumo } from '@shared/api'
 import { Capa, CartaoLivro, Estado } from '../componentes/Capa'
 import { contar, useLivros } from '../dados'
+import { Voltar } from '../componentes/Voltar'
 
 export type TipoPagina = 'autor' | 'serie' | 'editora' | 'pais'
 const ROTULO: Record<TipoPagina, string> = { autor: 'Autoria', serie: 'Série', editora: 'Editora', pais: 'País' }
@@ -75,6 +76,7 @@ export function Autoria({ tipo }: { tipo: TipoPagina }) {
         <div className="veu" />
         <div className="wrap hero-c">
           <div>
+            <Voltar />
             <p className="link">{ROTULO[tipo]}</p>
             <h1 className="titulo-grande">{nome}</h1>
             {tipo === 'serie' && <p className="sub">de <Autores autores={autores} /></p>}

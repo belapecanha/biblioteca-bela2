@@ -28,7 +28,7 @@ test('abre vazio sem erro e sem expor o Node', async () => {
     await expect(janela.getByRole('heading', { name: /Sua estante/ })).toBeVisible()
     expect(await janela.evaluate(() => typeof (window as { require?: unknown }).require)).toBe('undefined')
     await janela.getByRole('link', { name: 'Perfil' }).click()
-    await expect(janela.getByText('Esta tela será construída')).toBeVisible()
+    await expect(janela.getByRole('heading', { name: 'Favoritos', exact: true })).toBeVisible()
     expect(erros).toEqual([])
   } finally {
     await app.close()
@@ -42,6 +42,7 @@ test.describe('com uma cópia da biblioteca real', () => {
   let app: ElectronApplication
   let janela: Page
   let erros: string[]
+  let total: number
 
   test.beforeAll(() => {
     pasta = mkdtempSync(join(tmpdir(), 'bela-real-'))
@@ -49,6 +50,8 @@ test.describe('com uma cópia da biblioteca real', () => {
   })
   test.beforeEach(async () => {
     ;({ app, janela, erros } = await abrir(pasta))
+    total = await janela.evaluate(async () => (await window.bela.estado()).livros)
+    expect(total).toBeGreaterThan(0)
   })
   test.afterEach(async () => {
     try {
@@ -60,10 +63,25 @@ test.describe('com uma cópia da biblioteca real', () => {
   test.afterAll(() => rmSync(pasta, { recursive: true, force: true }))
 
   test('estante: tira o livro, mostra capa e abre a ficha', async () => {
-    await expect(janela.getByRole('heading', { name: /218 livros/ })).toBeVisible()
-    expect(await janela.locator('.lombada').count()).toBe(218)
+    await expect(janela.getByRole('heading', { name: `Sua estante, ${total} livros` })).toBeVisible()
+    expect(await janela.locator('.lombada').count()).toBe(total)
     await janela.waitForTimeout(600)
     await janela.screenshot({ path: 'test-results/estante.png' })
+    // Nenhum título de lombada fica cortado ou com reticências, e cada série tem uma altura só.
+    const lombadas = await janela.evaluate(async () => {
+      await document.fonts.ready
+      const livros = await window.bela.livros.listar()
+      const cortados = [...document.querySelectorAll<HTMLElement>('.lb-titulo')]
+        .filter((t) => t.scrollHeight > t.clientHeight + 1 || t.scrollWidth > t.clientWidth + 1 || t.textContent!.includes('…'))
+        .map((t) => t.textContent)
+      const alturas: Record<string, Set<number>> = {}
+      for (const b of document.querySelectorAll<HTMLElement>('.lombada')) {
+        const livro = livros.find((l) => b.getAttribute('aria-label')!.startsWith(`${l.titulo}, de`))
+        if (livro?.serie) (alturas[livro.serie.nome] ??= new Set()).add(Math.round(b.getBoundingClientRect().height))
+      }
+      return { cortados, seriesDesiguais: Object.entries(alturas).filter(([, a]) => a.size > 1).map(([s]) => s) }
+    })
+    expect(lombadas).toEqual({ cortados: [], seriesDesiguais: [] })
 
     await janela.getByRole('button', { name: /^Heartless, de/ }).click()
     await expect(janela.locator('.ficha3d')).toBeVisible()
@@ -119,9 +137,9 @@ test.describe('com uma cópia da biblioteca real', () => {
 
   test('livros: filtra e marca posse em lote; série e busca funcionam', async () => {
     await janela.getByRole('link', { name: 'Livros', exact: true }).click()
-    await expect(janela.getByRole('heading', { name: '218 livros' })).toBeVisible()
+    await expect(janela.getByRole('heading', { name: `${total} livros` })).toBeVisible()
     await janela.locator('#f-tema').selectOption('Dark Romance')
-    await expect(janela.getByRole('heading', { name: /^\d+ livros$/ })).not.toHaveText('218 livros')
+    await expect(janela.getByRole('heading', { name: /^\d+ livros$/ })).not.toHaveText(`${total} livros`)
     await janela.waitForTimeout(500)
     await janela.screenshot({ path: 'test-results/livros.png' })
 
