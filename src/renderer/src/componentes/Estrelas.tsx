@@ -16,7 +16,12 @@ export function Estrelas({
   const escolher = (valor: number) => aoMudar(nota === valor ? null : valor)
 
   return (
-    <div className={grande ? 'estrelas grande' : 'estrelas'} role="group" aria-label="Sua nota" onMouseLeave={() => setSobre(null)}>
+    <div
+      className={grande ? 'estrelas grande' : 'estrelas'}
+      role="group"
+      aria-label="Sua nota"
+      onMouseLeave={() => setSobre(null)}
+    >
       {[1, 2, 3, 4, 5].map((i) => {
         const meio = i - 0.5
         const preenchido = mostrada >= i ? 100 : mostrada >= meio ? 50 : 0

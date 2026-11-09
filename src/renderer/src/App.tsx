@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './componentes/Layout'
+import { LimiteErro } from './componentes/LimiteErro'
 import { Autoria } from './paginas/Autoria'
 import { Busca } from './paginas/Busca'
 import { Estante } from './paginas/Estante'
@@ -42,8 +43,22 @@ export function App() {
             <Route path="registrar" element={<Registrar />} />
             <Route path="configuracoes" element={<Configuracoes />} />
           </Route>
-          <Route path="retrospectiva" element={<Retrospectiva />} />
-          <Route path="retrospectiva/imagem/:ano" element={<ImagemRetrospectiva />} />
+          <Route
+            path="retrospectiva"
+            element={
+              <LimiteErro>
+                <Retrospectiva />
+              </LimiteErro>
+            }
+          />
+          <Route
+            path="retrospectiva/imagem/:ano"
+            element={
+              <LimiteErro comLink={false}>
+                <ImagemRetrospectiva />
+              </LimiteErro>
+            }
+          />
         </Routes>
       </HashRouter>
     </QueryClientProvider>

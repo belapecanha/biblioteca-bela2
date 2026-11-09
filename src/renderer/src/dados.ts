@@ -3,18 +3,29 @@ import type { LivroResumo, Posse, Status } from '@shared/api'
 import type { TipoClassificacao } from '@shared/classificacoes'
 
 function invalidarBiblioteca(cliente: ReturnType<typeof useQueryClient>) {
-  for (const chave of ['livros', 'livro', 'diario', 'perfil', 'listas', 'pendencias']) void cliente.invalidateQueries({ queryKey: [chave] })
+  for (const chave of ['livros', 'livro', 'diario', 'perfil', 'listas', 'pendencias'])
+    void cliente.invalidateQueries({ queryKey: [chave] })
 }
-export function usePerfilDados() { return useQuery({ queryKey: ['perfil', 'dados'], queryFn: () => window.bela.perfil.dados() }) }
-export function usePainelPerfil(ano = new Date().getFullYear()) { return useQuery({ queryKey: ['perfil', 'painel', ano], queryFn: () => window.bela.perfil.painel(ano) }) }
-export function useListas() { return useQuery({ queryKey: ['listas'], queryFn: () => window.bela.listas.listar() }) }
+export function usePerfilDados() {
+  return useQuery({ queryKey: ['perfil', 'dados'], queryFn: () => window.bela.perfil.dados() })
+}
+export function usePainelPerfil(ano = new Date().getFullYear()) {
+  return useQuery({ queryKey: ['perfil', 'painel', ano], queryFn: () => window.bela.perfil.painel(ano) })
+}
+export function useListas() {
+  return useQuery({ queryKey: ['listas'], queryFn: () => window.bela.listas.listar() })
+}
 
 export function useLivros() {
   return useQuery({ queryKey: ['livros'], queryFn: () => window.bela.livros.listar() })
 }
 
 export function useLivro(id: number) {
-  return useQuery({ queryKey: ['livro', id], queryFn: () => window.bela.livros.obter(id), enabled: Number.isInteger(id) && id > 0 })
+  return useQuery({
+    queryKey: ['livro', id],
+    queryFn: () => window.bela.livros.obter(id),
+    enabled: Number.isInteger(id) && id > 0
+  })
 }
 
 // A chave começa com 'livros' para ser atualizada junto em toda alteração de livro ou leitura.
@@ -39,7 +50,8 @@ export function useAcoesLivro() {
       ...opcoes
     }),
     posse: useMutation({
-      mutationFn: ({ ids, posse }: { ids: number[]; posse: Posse | null }) => window.bela.livros.definirPosse(ids, posse),
+      mutationFn: ({ ids, posse }: { ids: number[]; posse: Posse | null }) =>
+        window.bela.livros.definirPosse(ids, posse),
       ...opcoes
     }),
     classificacoes: useMutation({
@@ -54,12 +66,10 @@ export function useSalvar<T, R>(acao: (dados: T) => Promise<R>) {
   const cliente = useQueryClient()
   return useMutation({ mutationFn: acao, onSuccess: () => invalidarBiblioteca(cliente) })
 }
-export function hoje(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
+export { dataLocal as hoje } from '@shared/datas'
 export function mensagemErro(erro: unknown): string {
-  return (erro instanceof Error ? erro.message : 'Não foi possível salvar. Tente novamente.').replace(/^Error invoking remote method '[^']+': (?:Error: )?/, '')
+  // O preload já entrega a mensagem pronta (src/shared/ipc.ts); aqui só sobra o caso sem mensagem.
+  return erro instanceof Error && erro.message ? erro.message : 'Não foi possível salvar. Tente novamente.'
 }
 
 export const NOME_STATUS: Record<Status, string> = {
@@ -78,7 +88,10 @@ export function numeroDoTexto(texto: string): number {
   return h
 }
 
-export function coresDoLivro(l: Pick<LivroResumo, 'titulo' | 'corPrincipal' | 'corTexto'>): { fundo: string; texto: string } {
+export function coresDoLivro(l: Pick<LivroResumo, 'titulo' | 'corPrincipal' | 'corTexto'>): {
+  fundo: string
+  texto: string
+} {
   if (l.corPrincipal) return { fundo: l.corPrincipal, texto: l.corTexto ?? '#F6EDE1' }
   return { fundo: PALETA[numeroDoTexto(l.titulo) % PALETA.length], texto: '#F6EDE1' }
 }
@@ -92,15 +105,4 @@ export function nomesAutores(l: Pick<LivroResumo, 'autores'>): string {
   return l.autores.map((a) => a.nome).join(', ')
 }
 
-export function normalizar(texto: string): string {
-  return texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-}
-
-export function contar(lista: string[]): [string, number][] {
-  const mapa = new Map<string, number>()
-  for (const item of lista) mapa.set(item, (mapa.get(item) ?? 0) + 1)
-  return [...mapa.entries()].sort((a, b) => b[1] - a[1])
-}
+export { simples as normalizar, contar } from '@shared/texto'

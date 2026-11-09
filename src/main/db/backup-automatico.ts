@@ -18,7 +18,9 @@ export function backupAoAbrir(pastaDados: string, versao: string, agora = new Da
   try {
     const situacao = fonte.pragma('quick_check', { simple: true })
     if (situacao !== 'ok') {
-      throw new Error(`O banco da biblioteca está danificado (${String(situacao)}). Nada foi alterado. As cópias automáticas ficam em ${pasta}.`)
+      throw new Error(
+        `O banco da biblioteca está danificado (${String(situacao)}). Nada foi alterado. As cópias automáticas ficam em ${pasta}.`
+      )
     }
     if (existsSync(destino)) return null
     // VACUUM INTO gera uma cópia consistente, já com o que estava no WAL.
@@ -27,7 +29,9 @@ export function backupAoAbrir(pastaDados: string, versao: string, agora = new Da
     fonte.close()
   }
 
-  const copias = readdirSync(pasta).filter((f) => /^biblioteca-\d{4}-\d{2}-\d{2}-v.+\.db$/.test(f)).sort()
+  const copias = readdirSync(pasta)
+    .filter((f) => /^biblioteca-\d{4}-\d{2}-\d{2}-v.+\.db$/.test(f))
+    .sort()
   for (const antiga of copias.slice(0, Math.max(0, copias.length - MANTER))) unlinkSync(join(pasta, antiga))
   return destino
 }

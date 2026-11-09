@@ -4,5 +4,9 @@ import { useNavigate } from 'react-router-dom'
 export function Voltar() {
   const navegar = useNavigate()
   const temHistorico = (window.history.state as { idx?: number } | null)?.idx
-  return <button type="button" className="voltar" onClick={() => (temHistorico ? navegar(-1) : navegar('/livros'))}>← Voltar</button>
+  return (
+    <button type="button" className="voltar" onClick={() => (temHistorico ? navegar(-1) : navegar('/livros'))}>
+      ← Voltar
+    </button>
+  )
 }

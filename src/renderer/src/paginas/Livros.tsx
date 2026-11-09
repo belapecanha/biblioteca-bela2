@@ -3,7 +3,19 @@ import type { LivroResumo, Posse, Status } from '@shared/api'
 import { CartaoLivro, Estado } from '../componentes/Capa'
 import { contar, NOME_STATUS, nomesAutores, normalizar, useAcoesLivro, useLivros } from '../dados'
 
-const INICIAIS = { busca: '', genero: '', tema: '', mood: '', autor: '', serie: '', nota: '', ano: '', formato: '', posse: '', ordem: 'titulo' }
+const INICIAIS = {
+  busca: '',
+  genero: '',
+  tema: '',
+  mood: '',
+  autor: '',
+  serie: '',
+  nota: '',
+  ano: '',
+  formato: '',
+  posse: '',
+  ordem: 'titulo'
+}
 const PASSO = 60
 
 const ORDENS: Record<string, (a: LivroResumo, b: LivroResumo) => number> = {
@@ -55,7 +67,8 @@ export function Livros() {
       .sort(ORDENS[f.ordem])
   }, [livros, status, f])
 
-  if (!consulta.data) return <Estado carregando={consulta.isLoading} erro={consulta.isError} aoTentar={() => void consulta.refetch()} />
+  if (!consulta.data)
+    return <Estado carregando={consulta.isLoading} erro={consulta.isError} aoTentar={() => void consulta.refetch()} />
 
   const mudar = (campo: keyof typeof INICIAIS) => (e: { target: { value: string } }) => {
     setF({ ...f, [campo]: e.target.value })
@@ -63,10 +76,16 @@ export function Livros() {
   }
   const seletor = (campo: keyof typeof INICIAIS, rotulo: string, lista: string[]) => (
     <div>
-      <label className="rot" htmlFor={`f-${campo}`}>{rotulo}</label>
+      <label className="rot" htmlFor={`f-${campo}`}>
+        {rotulo}
+      </label>
       <select id={`f-${campo}`} className="campo larga" value={f[campo]} onChange={mudar(campo)}>
         <option value="">Todos</option>
-        {lista.map((o) => <option key={o} value={o}>{o}</option>)}
+        {lista.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
       </select>
     </div>
   )
@@ -94,14 +113,25 @@ export function Livros() {
       <h1>{filtrados.length} livros</h1>
       <div className="linha" role="group" aria-label="Status">
         {abas.map(([v, n]) => (
-          <button type="button" key={v} className={status === v ? 'btn btn2 on' : 'btn btn2'} aria-pressed={status === v} onClick={() => { setStatus(v); setLimite(PASSO) }}>
+          <button
+            type="button"
+            key={v}
+            className={status === v ? 'btn btn2 on' : 'btn btn2'}
+            aria-pressed={status === v}
+            onClick={() => {
+              setStatus(v)
+              setLimite(PASSO)
+            }}
+          >
             {n} ({v ? livros.filter((l) => l.status === v).length : livros.length})
           </button>
         ))}
       </div>
       <div className="filtros">
         <div>
-          <label className="rot" htmlFor="f-busca">Filtrar por texto</label>
+          <label className="rot" htmlFor="f-busca">
+            Filtrar por texto
+          </label>
           <input id="f-busca" className="campo larga" type="search" value={f.busca} onChange={mudar('busca')} />
         </div>
         {seletor('genero', 'Gênero', opcoes.genero)}
@@ -111,14 +141,22 @@ export function Livros() {
         {seletor('serie', 'Série', opcoes.serie)}
         {seletor('ano', 'Ano lido', opcoes.ano)}
         <div>
-          <label className="rot" htmlFor="f-nota">Nota mínima</label>
+          <label className="rot" htmlFor="f-nota">
+            Nota mínima
+          </label>
           <select id="f-nota" className="campo larga" value={f.nota} onChange={mudar('nota')}>
             <option value="">Todas</option>
-            {['3', '3.5', '4', '4.5', '5'].map((n) => <option key={n} value={n}>{n.replace('.', ',')}</option>)}
+            {['3', '3.5', '4', '4.5', '5'].map((n) => (
+              <option key={n} value={n}>
+                {n.replace('.', ',')}
+              </option>
+            ))}
           </select>
         </div>
         <div>
-          <label className="rot" htmlFor="f-formato">Formato</label>
+          <label className="rot" htmlFor="f-formato">
+            Formato
+          </label>
           <select id="f-formato" className="campo larga" value={f.formato} onChange={mudar('formato')}>
             <option value="">Todos</option>
             <option value="fisico">Físico</option>
@@ -127,7 +165,9 @@ export function Livros() {
           </select>
         </div>
         <div>
-          <label className="rot" htmlFor="f-posse">Posse</label>
+          <label className="rot" htmlFor="f-posse">
+            Posse
+          </label>
           <select id="f-posse" className="campo larga" value={f.posse} onChange={mudar('posse')}>
             <option value="">Todos</option>
             <option value="definir">A definir</option>
@@ -137,7 +177,9 @@ export function Livros() {
           </select>
         </div>
         <div>
-          <label className="rot" htmlFor="f-ordem">Ordenar por</label>
+          <label className="rot" htmlFor="f-ordem">
+            Ordenar por
+          </label>
           <select id="f-ordem" className="campo larga" value={f.ordem} onChange={mudar('ordem')}>
             <option value="titulo">Título</option>
             <option value="recente">Lidos há menos tempo</option>
@@ -147,24 +189,54 @@ export function Livros() {
         </div>
       </div>
       <div className="linha centrada">
-        <button type="button" className={selecionando ? 'btn btn2 on' : 'btn btn2'} aria-pressed={selecionando} onClick={() => { setSelecionando(!selecionando); setMarcados(new Set()) }}>
+        <button
+          type="button"
+          className={selecionando ? 'btn btn2 on' : 'btn btn2'}
+          aria-pressed={selecionando}
+          onClick={() => {
+            setSelecionando(!selecionando)
+            setMarcados(new Set())
+          }}
+        >
           {selecionando ? 'Cancelar seleção' : 'Selecionar vários'}
         </button>
         {selecionando && (
           <>
             <span role="status">{marcados.size} selecionados</span>
-            <button type="button" className="btn btn2" onClick={() => setMarcados(new Set(filtrados.map((l) => l.id)))}>Selecionar os filtrados</button>
-            <button type="button" className="btn" disabled={!marcados.size} onClick={() => marcarPosse('tenho')}>Marcar como Tenho</button>
-            <button type="button" className="btn btn2" disabled={!marcados.size} onClick={() => marcarPosse('nao_tenho')}>Não tenho</button>
-            <button type="button" className="btn btn2" disabled={!marcados.size} onClick={() => marcarPosse('ja_tive')}>Já tive</button>
+            <button type="button" className="btn btn2" onClick={() => setMarcados(new Set(filtrados.map((l) => l.id)))}>
+              Selecionar os filtrados
+            </button>
+            <button type="button" className="btn" disabled={!marcados.size} onClick={() => marcarPosse('tenho')}>
+              Marcar como Tenho
+            </button>
+            <button
+              type="button"
+              className="btn btn2"
+              disabled={!marcados.size}
+              onClick={() => marcarPosse('nao_tenho')}
+            >
+              Não tenho
+            </button>
+            <button type="button" className="btn btn2" disabled={!marcados.size} onClick={() => marcarPosse('ja_tive')}>
+              Já tive
+            </button>
           </>
         )}
       </div>
-      {acoes.posse.isError && <p className="erro" role="alert">Não foi possível salvar. Tente de novo.</p>}
+      {acoes.posse.isError && (
+        <p className="erro" role="alert">
+          Não foi possível salvar. Tente de novo.
+        </p>
+      )}
       {filtrados.length === 0 && <p className="muted">Nenhum livro com esses filtros.</p>}
       <div className="grade">
         {filtrados.slice(0, limite).map((l) => (
-          <CartaoLivro key={l.id} livro={l} marcado={marcados.has(l.id)} aoClicar={selecionando ? () => alternar(l.id) : undefined} />
+          <CartaoLivro
+            key={l.id}
+            livro={l}
+            marcado={marcados.has(l.id)}
+            aoClicar={selecionando ? () => alternar(l.id) : undefined}
+          />
         ))}
       </div>
       {filtrados.length > limite && (

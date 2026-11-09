@@ -79,8 +79,7 @@ export async function extrairCores(origem: string | Buffer): Promise<CoresCapa> 
 
   const d1 = vivas[0]
   const d2 =
-    vivas.slice(1).find((g) => distanciaMatiz(g.matiz, d1.matiz) > 0.06 || Math.abs(g.valor - d1.valor) > 0.25) ??
-    d1
+    vivas.slice(1).find((g) => distanciaMatiz(g.matiz, d1.matiz) > 0.06 || Math.abs(g.valor - d1.valor) > 0.25) ?? d1
   const luminancia = 0.299 * principal.r + 0.587 * principal.g + 0.114 * principal.b
 
   return {

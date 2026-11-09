@@ -1,15 +1,11 @@
 import { sql } from 'drizzle-orm'
-import {
-  check,
-  index,
-  integer,
-  primaryKey,
-  real,
-  sqliteTable,
-  text,
-  uniqueIndex
-} from 'drizzle-orm/sqlite-core'
+import { check, index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
+// Caminho relativo: o drizzle-kit carrega este arquivo sem o alias @shared.
+import { TIPOS_CLASSIFICACAO } from '../../shared/classificacoes'
+import { FORMATOS, ORIGENS, PAPEIS, POSSES, PRECISOES, STATUS, STATUS_LEITURA, TIPOS } from '../../shared/dominio'
 
+// Os carimbos de criação e alteração ficam em UTC (padrão do SQLite). Quem precisa da data
+// no fuso do computador converte na leitura com `horaLocal` (src/main/db/tempo.ts).
 const agora = sql`CURRENT_TIMESTAMP`
 
 export const editoras = sqliteTable('editoras', {
@@ -36,9 +32,7 @@ export const livros = sqliteTable(
     id: integer('id').primaryKey({ autoIncrement: true }),
     goodreadsId: text('goodreads_id').unique(),
     // Livros importados têm data de entrada pouco confiável, então ficam fora do tempo de fila.
-    origem: text('origem', { enum: ['goodreads', 'banco_antigo', 'manual'] })
-      .notNull()
-      .default('manual'),
+    origem: text('origem', { enum: ORIGENS }).notNull().default('manual'),
     titulo: text('titulo').notNull(),
     tituloOriginal: text('titulo_original'),
     isbn10: text('isbn10'),
@@ -46,10 +40,8 @@ export const livros = sqliteTable(
     editoraId: integer('editora_id').references(() => editoras.id, { onDelete: 'set null' }),
     serieId: integer('serie_id').references(() => series.id, { onDelete: 'set null' }),
     volume: real('volume'),
-    tipo: text('tipo', { enum: ['livro', 'manhwa', 'manga', 'graphic_novel', 'poesia'] })
-      .notNull()
-      .default('livro'),
-    formato: text('formato', { enum: ['fisico', 'ebook', 'audiolivro'] }),
+    tipo: text('tipo', { enum: TIPOS }).notNull().default('livro'),
+    formato: text('formato', { enum: FORMATOS }),
     paginas: integer('paginas'),
     paginasEstimadas: integer('paginas_estimadas', { mode: 'boolean' }).notNull().default(false),
     anoEdicao: integer('ano_edicao'),
@@ -62,10 +54,8 @@ export const livros = sqliteTable(
     corDestaque1: text('cor_destaque_1'),
     corDestaque2: text('cor_destaque_2'),
     corTexto: text('cor_texto'),
-    status: text('status', { enum: ['quero_ler', 'lendo', 'lido', 'pausado', 'abandonado'] })
-      .notNull()
-      .default('quero_ler'),
-    posse: text('posse', { enum: ['tenho', 'nao_tenho', 'ja_tive'] }),
+    status: text('status', { enum: STATUS }).notNull().default('quero_ler'),
+    posse: text('posse', { enum: POSSES }),
     favoritoPosicao: integer('favorito_posicao'),
     notasPrivadas: text('notas_privadas'),
     criadoEm: text('criado_em').notNull().default(agora),
@@ -89,22 +79,17 @@ export const livroAutores = sqliteTable(
     autorId: integer('autor_id')
       .notNull()
       .references(() => autores.id, { onDelete: 'restrict' }),
-    papel: text('papel', { enum: ['autor', 'tradutor', 'ilustrador'] })
-      .notNull()
-      .default('autor'),
+    papel: text('papel', { enum: PAPEIS }).notNull().default('autor'),
     ordem: integer('ordem').notNull().default(0)
   },
-  (t) => [
-    primaryKey({ columns: [t.livroId, t.autorId, t.papel] }),
-    index('idx_livro_autores_autor').on(t.autorId)
-  ]
+  (t) => [primaryKey({ columns: [t.livroId, t.autorId, t.papel] }), index('idx_livro_autores_autor').on(t.autorId)]
 )
 
 export const classificacoes = sqliteTable(
   'classificacoes',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
-    tipo: text('tipo', { enum: ['genero', 'tema', 'mood'] }).notNull(),
+    tipo: text('tipo', { enum: TIPOS_CLASSIFICACAO }).notNull(),
     nome: text('nome').notNull(),
     ordem: integer('ordem').notNull()
   },
@@ -135,12 +120,12 @@ export const leituras = sqliteTable(
     livroId: integer('livro_id')
       .notNull()
       .references(() => livros.id, { onDelete: 'cascade' }),
-    status: text('status', { enum: ['lendo', 'lido', 'pausado', 'abandonado'] }).notNull(),
-    formato: text('formato', { enum: ['fisico', 'ebook', 'audiolivro'] }),
+    status: text('status', { enum: STATUS_LEITURA }).notNull(),
+    formato: text('formato', { enum: FORMATOS }),
     dataInicio: text('data_inicio'),
     dataFim: text('data_fim'),
     anoFim: integer('ano_fim'),
-    precisaoFim: text('precisao_fim', { enum: ['dia', 'ano'] }),
+    precisaoFim: text('precisao_fim', { enum: PRECISOES }),
     nota: real('nota'),
     resenha: text('resenha'),
     criadoEm: text('criado_em').notNull().default(agora)
@@ -210,10 +195,7 @@ export const listaLivros = sqliteTable(
       .references(() => livros.id, { onDelete: 'cascade' }),
     posicao: integer('posicao').notNull()
   },
-  (t) => [
-    primaryKey({ columns: [t.listaId, t.livroId] }),
-    index('idx_lista_livros_livro').on(t.livroId)
-  ]
+  (t) => [primaryKey({ columns: [t.listaId, t.livroId] }), index('idx_lista_livros_livro').on(t.livroId)]
 )
 
 export const filaMeta = sqliteTable('fila_meta', {

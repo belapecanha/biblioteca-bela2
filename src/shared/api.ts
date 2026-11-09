@@ -1,13 +1,9 @@
 import type { TipoClassificacao } from './classificacoes'
 
-export const STATUS = ['quero_ler', 'lendo', 'lido', 'pausado', 'abandonado'] as const
-export type Status = (typeof STATUS)[number]
+import type { Formato, Origem, Papel, Posse, Precisao, Status, StatusLeitura, TipoLivro } from './dominio'
 
-export const POSSES = ['tenho', 'nao_tenho', 'ja_tive'] as const
-export type Posse = (typeof POSSES)[number]
-
-export type TipoLivro = 'livro' | 'manhwa' | 'manga' | 'graphic_novel' | 'poesia'
-export type Formato = 'fisico' | 'ebook' | 'audiolivro'
+export { POSSES, STATUS } from './dominio'
+export type { Formato, Origem, Papel, Posse, Precisao, Status, StatusLeitura, TipoLivro } from './dominio'
 
 export interface EstadoApp {
   versao: string
@@ -21,7 +17,9 @@ export interface Referencia {
   nome: string
 }
 
-export interface Autor extends Referencia { pais?: string | null }
+export interface Autor extends Referencia {
+  pais?: string | null
+}
 
 export interface LivroResumo {
   id: number
@@ -55,12 +53,12 @@ export interface LivroResumo {
 
 export interface Leitura {
   id: number
-  status: Exclude<Status, 'quero_ler'>
+  status: StatusLeitura
   formato: Formato | null
   dataInicio: string | null
   dataFim: string | null
   anoFim: number | null
-  precisaoFim: 'dia' | 'ano' | null
+  precisaoFim: Precisao | null
   nota: number | null
   resenha: string | null
 }
@@ -79,9 +77,22 @@ export interface LivroDetalhe extends LivroResumo {
   citacoes: Citacao[]
 }
 
-export interface Colaborador { nome: string; pais: string | null; papel: 'autor' | 'tradutor' | 'ilustrador' }
-export interface Progresso { id: number; leituraId: number; data: string; pagina: number }
-export interface Citacao { id: number; texto: string; pagina: number | null }
+export interface Colaborador {
+  nome: string
+  pais: string | null
+  papel: Papel
+}
+export interface Progresso {
+  id: number
+  leituraId: number
+  data: string
+  pagina: number
+}
+export interface Citacao {
+  id: number
+  texto: string
+  pagina: number | null
+}
 export interface DadosLivro {
   id?: number
   titulo: string
@@ -109,7 +120,8 @@ export interface DadosLivro {
   notasPrivadas: string | null
   leituraInicial?: Omit<DadosLeitura, 'id' | 'livroId'>
 }
-export type EntradaCapa = { bytes: number[] } | { url: string }
+/** Imagem local em bytes (Uint8Array atravessa o IPC sem cópia elemento a elemento) ou endereço do Google Books. */
+export type EntradaCapa = { bytes: Uint8Array } | { url: string }
 export type ResultadoSalvarLivro = { id: number; duplicados?: never } | { duplicados: LivroResumo[]; id?: never }
 export interface DadosLeitura {
   id?: number
@@ -119,11 +131,14 @@ export interface DadosLeitura {
   dataInicio: string | null
   dataFim: string | null
   anoFim: number | null
-  precisaoFim: 'dia' | 'ano' | null
+  precisaoFim: Precisao | null
   nota: number | null
   resenha: string | null
 }
-export interface LeituraDiario extends Leitura { livro: LivroResumo; progresso: Progresso[] }
+export interface LeituraDiario extends Leitura {
+  livro: LivroResumo
+  progresso: Progresso[]
+}
 export interface ResultadoGoogle {
   googleId: string
   titulo: string
@@ -136,15 +151,17 @@ export interface ResultadoGoogle {
   isbn10: string | null
   isbn13: string | null
   capaUrl: string | null
-  fonte: 'google' | 'openlibrary'
 }
-export interface ConfiguracaoGoogle { configurada: boolean; arquivo: string }
+export interface ConfiguracaoGoogle {
+  configurada: boolean
+  arquivo: string
+}
 export interface LeituraAnalise {
   id: number
   formato: Formato | null
   ano: number | null
   data: string | null
-  precisao: 'dia' | 'ano' | null
+  precisao: Precisao | null
   nota: number | null
   temResenha: boolean
 }
@@ -153,17 +170,42 @@ export interface LivroAnalise extends LivroResumo {
   pais: string | null
   cor1: string | null
   cor2: string | null
-  origem: 'goodreads' | 'banco_antigo' | 'manual'
+  origem: Origem
   criadoEm: string
   primeiroInicio: string | null
   leituras: LeituraAnalise[]
 }
-export interface BaseAnalise { livros: LivroAnalise[]; metas: Record<number, number> }
-export interface PerfilDados { nome: string; frase: string; foto: string | null; topo: string | null }
-export interface PerfilEdicao { nome: string; frase: string; foto?: number[] | null; topo?: number[] | null }
-export interface ListaDados { id?: number; nome: string; descricao: string | null; ordenada: boolean }
-export interface ListaResumo extends Required<ListaDados> { total: number; capas: LivroResumo[] }
-export interface ListaDetalhe extends ListaResumo { livros: LivroResumo[] }
+export interface BaseAnalise {
+  livros: LivroAnalise[]
+  metas: Record<number, number>
+  /** Favoritos escolhidos para a imagem da retrospectiva, por ano, na ordem escolhida. */
+  favoritosAno: Record<number, number[]>
+}
+export interface PerfilDados {
+  nome: string
+  frase: string
+  foto: string | null
+  topo: string | null
+}
+export interface PerfilEdicao {
+  nome: string
+  frase: string
+  foto?: Uint8Array | null
+  topo?: Uint8Array | null
+}
+export interface ListaDados {
+  id?: number
+  nome: string
+  descricao: string | null
+  ordenada: boolean
+}
+export interface ListaResumo extends Required<ListaDados> {
+  total: number
+  capas: LivroResumo[]
+}
+export interface ListaDetalhe extends ListaResumo {
+  livros: LivroResumo[]
+}
 export interface PainelPerfil {
   perfil: PerfilDados
   favoritos: LivroResumo[]
@@ -174,13 +216,54 @@ export interface PainelPerfil {
   atividade: { livro: LivroResumo; data: string | null; ano: number | null; nota: number | null }[]
   series: { id: number; nome: string; lidos: number; cadastrados: number; total: number | null }[]
 }
-export interface PendenciaDados { codigo: string; rotulo: string; livros: LivroResumo[] }
-export interface PreviaImportacao { token: string; total: number; novos: number; repetidos: number; invalidos: number; titulos: string[]; avisos: string[] }
-export interface PreviaRestauracao { token: string; livros: number; leituras: number; imagens: number; nome: string }
-export interface ResultadoImportacao { adicionados: number; ignorados: number; backup: string }
+export interface PendenciaDados {
+  codigo: string
+  rotulo: string
+  livros: LivroResumo[]
+}
+export interface PreviaImportacao {
+  token: string
+  total: number
+  novos: number
+  repetidos: number
+  invalidos: number
+  titulos: string[]
+  avisos: string[]
+}
+export interface PreviaRestauracao {
+  token: string
+  livros: number
+  leituras: number
+  imagens: number
+  nome: string
+}
+export interface ResultadoImportacao {
+  adicionados: number
+  ignorados: number
+  backup: string
+}
+export interface ResumoImagens {
+  arquivos: number
+  bytes: number
+}
+export type TipoEntidade = 'autor' | 'editora' | 'serie'
+export interface Entidade {
+  id: number
+  nome: string
+  pais: string | null
+  totalVolumes: number | null
+}
+export interface DadosEntidade {
+  nome: string
+  pais?: string | null
+  totalVolumes?: number | null
+}
+export type ResultadoEditarEntidade = { id: number; existente?: never } | { existente: Referencia; id?: never }
 
 export interface ApiBela {
   estado: () => Promise<EstadoApp>
+  /** Grava no log do app um erro da interface. Não espera resposta. */
+  registrarErro: (mensagem: string, detalhe?: string) => void
   livros: {
     listar: () => Promise<LivroResumo[]>
     obter: (id: number) => Promise<LivroDetalhe | null>
@@ -193,6 +276,16 @@ export interface ApiBela {
     trocarCapa: (id: number, capa: EntradaCapa) => Promise<void>
     salvarNotas: (id: number, texto: string | null) => Promise<void>
     editoras: () => Promise<{ nome: string; pais: string | null }[]>
+    excluir: (id: number) => Promise<void>
+  }
+  autoria: {
+    obter: (tipo: TipoEntidade, id: number) => Promise<Entidade | null>
+    editar: (
+      tipo: TipoEntidade,
+      id: number,
+      dados: DadosEntidade,
+      mesclar?: boolean
+    ) => Promise<ResultadoEditarEntidade>
   }
   leituras: {
     salvar: (dados: DadosLeitura) => Promise<number>
@@ -201,6 +294,7 @@ export interface ApiBela {
     salvarCitacao: (livroId: number, citacao: Omit<Citacao, 'id'> & { id?: number }) => Promise<void>
     removerCitacao: (livroId: number, id: number) => Promise<void>
     diario: () => Promise<LeituraDiario[]>
+    excluir: (livroId: number, id: number) => Promise<void>
   }
   google: {
     configuracao: () => Promise<ConfiguracaoGoogle>
@@ -209,6 +303,7 @@ export interface ApiBela {
   analise: {
     base: () => Promise<BaseAnalise>
     definirMeta: (ano: number, livros: number | null) => Promise<void>
+    definirFavoritosDoAno: (ano: number, ids: number[] | null) => Promise<void>
     salvarImagem: (ano: number) => Promise<string | null>
   }
   perfil: {
@@ -235,5 +330,7 @@ export interface ApiBela {
     backup: () => Promise<string | null>
     prepararRestauracao: () => Promise<PreviaRestauracao | null>
     restaurar: (token: string) => Promise<{ backup: string }>
+    imagensOrfas: () => Promise<ResumoImagens>
+    limparImagens: () => Promise<ResumoImagens>
   }
 }

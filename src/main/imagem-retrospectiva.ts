@@ -1,5 +1,6 @@
 import { BrowserWindow, dialog } from 'electron'
 import sharp, { type OverlayOptions } from 'sharp'
+import { COR_FUNDO } from '@shared/tema'
 import { numero } from './validacao'
 
 const LARGURA = 1080
@@ -21,7 +22,7 @@ export async function salvarImagemRetrospectiva(
     width: LARGURA,
     height: ALTURA,
     useContentSize: true,
-    backgroundColor: '#1C262E',
+    backgroundColor: COR_FUNDO,
     webPreferences: { preload, contextIsolation: true, nodeIntegration: false, sandbox: true, offscreen: true }
   })
   try {
@@ -38,15 +39,24 @@ export async function salvarImagemRetrospectiva(
     const faixas: OverlayOptions[] = []
     for (let y = 0; y < ALTURA; y += area.altura) {
       for (let x = 0; x < LARGURA; x += area.largura) {
-        await janela.webContents.executeJavaScript(`document.querySelector('.retro-imagem').style.transform = 'translate(${-x}px, ${-y}px)'`)
+        await janela.webContents.executeJavaScript(
+          `document.querySelector('.retro-imagem').style.transform = 'translate(${-x}px, ${-y}px)'`
+        )
         await new Promise((ok) => setTimeout(ok, 200))
         const width = Math.min(area.largura, LARGURA - x)
         const height = Math.min(area.altura, ALTURA - y)
         const faixa = await janela.webContents.capturePage({ x: 0, y: 0, width, height })
-        faixas.push({ input: await sharp(faixa.toPNG()).resize(width, height, { fit: 'fill' }).toBuffer(), left: x, top: y })
+        faixas.push({
+          input: await sharp(faixa.toPNG()).resize(width, height, { fit: 'fill' }).toBuffer(),
+          left: x,
+          top: y
+        })
       }
     }
-    await sharp({ create: { width: LARGURA, height: ALTURA, channels: 3, background: '#1C262E' } }).composite(faixas).png().toFile(escolha.filePath)
+    await sharp({ create: { width: LARGURA, height: ALTURA, channels: 3, background: COR_FUNDO } })
+      .composite(faixas)
+      .png()
+      .toFile(escolha.filePath)
     return escolha.filePath
   } finally {
     janela.destroy()

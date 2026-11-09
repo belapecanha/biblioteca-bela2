@@ -1,7 +1,7 @@
 :root {
   color-scheme: dark;
   --noite: #141c22;
-  --fundo: #1c262e;
+  --fundo: #1c262e; /* Igual a COR_FUNDO em src/shared/tema.ts. */
   --cartao: #25323c;
   --cartao-alto: #33404b;
   --linha: #3d4d5a;

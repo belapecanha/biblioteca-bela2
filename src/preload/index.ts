@@ -1,63 +1,28 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { ApiBela } from '@shared/api'
+import { CANAL_ERRO, CONTRATO, percorrerContrato, type Resposta } from '@shared/ipc'
 
-const api: ApiBela = {
-  estado: () => ipcRenderer.invoke('app:estado'),
-  livros: {
-    listar: () => ipcRenderer.invoke('livros:listar'),
-    obter: (id) => ipcRenderer.invoke('livros:obter', id),
-    definirNota: (id, nota) => ipcRenderer.invoke('livros:nota', id, nota),
-    definirStatus: (id, status) => ipcRenderer.invoke('livros:status', id, status),
-    definirPosse: (ids, posse) => ipcRenderer.invoke('livros:posse', ids, posse),
-    definirClassificacoes: (id, tipo, nomes) => ipcRenderer.invoke('livros:classificacoes', id, tipo, nomes),
-    salvar: (dados, confirmar, capa) => ipcRenderer.invoke('livros:salvar', dados, confirmar, capa),
-    duplicados: (dados) => ipcRenderer.invoke('livros:duplicados', dados),
-    trocarCapa: (id, capa) => ipcRenderer.invoke('livros:capa', id, capa),
-    salvarNotas: (id, texto) => ipcRenderer.invoke('livros:notas', id, texto),
-    editoras: () => ipcRenderer.invoke('livros:editoras')
-  },
-  leituras: {
-    salvar: (dados) => ipcRenderer.invoke('leituras:salvar', dados),
-    progresso: (livroId, leituraId, data, pagina) => ipcRenderer.invoke('leituras:progresso', livroId, leituraId, data, pagina),
-    removerProgresso: (livroId, id) => ipcRenderer.invoke('leituras:remover-progresso', livroId, id),
-    salvarCitacao: (livroId, citacao) => ipcRenderer.invoke('leituras:citacao', livroId, citacao),
-    removerCitacao: (livroId, id) => ipcRenderer.invoke('leituras:remover-citacao', livroId, id),
-    diario: () => ipcRenderer.invoke('leituras:diario')
-  },
-  google: {
-    configuracao: () => ipcRenderer.invoke('google:configuracao'),
-    buscar: (termo) => ipcRenderer.invoke('google:buscar', termo)
-  },
-  analise: {
-    base: () => ipcRenderer.invoke('analise:base'),
-    definirMeta: (ano, livros) => ipcRenderer.invoke('analise:meta', ano, livros),
-    salvarImagem: (ano) => ipcRenderer.invoke('analise:salvar-imagem', ano)
-  },
-  perfil: {
-    dados: () => ipcRenderer.invoke('perfil:dados'),
-    painel: (ano) => ipcRenderer.invoke('perfil:painel', ano),
-    salvar: (dados) => ipcRenderer.invoke('perfil:salvar', dados),
-    favoritos: (ids) => ipcRenderer.invoke('perfil:favoritos', ids),
-    fila: (ids) => ipcRenderer.invoke('perfil:fila', ids),
-    pendencias: () => ipcRenderer.invoke('perfil:pendencias')
-  },
-  listas: {
-    listar: () => ipcRenderer.invoke('listas:listar'),
-    obter: (id) => ipcRenderer.invoke('listas:obter', id),
-    salvar: (dados) => ipcRenderer.invoke('listas:salvar', dados),
-    adicionar: (id, livros) => ipcRenderer.invoke('listas:adicionar', id, livros),
-    removerLivro: (id, livroId) => ipcRenderer.invoke('listas:remover', id, livroId),
-    ordenar: (id, livros) => ipcRenderer.invoke('listas:ordenar', id, livros),
-    excluir: (id) => ipcRenderer.invoke('listas:excluir', id)
-  },
-  arquivos: {
-    prepararCsv: (csv) => ipcRenderer.invoke('arquivos:preparar-csv', csv),
-    importarCsv: (token) => ipcRenderer.invoke('arquivos:importar-csv', token),
-    exportarCsv: () => ipcRenderer.invoke('arquivos:exportar-csv'),
-    backup: () => ipcRenderer.invoke('arquivos:backup'),
-    prepararRestauracao: () => ipcRenderer.invoke('arquivos:preparar-restauracao'),
-    restaurar: (token) => ipcRenderer.invoke('arquivos:restaurar', token)
-  }
+// A API é montada a partir do contrato: nenhum nome de canal é escrito à mão aqui.
+// O main sempre responde { ok, dados } ou { ok: false, erro }; o erro vira uma exceção
+// com a mensagem já pronta para a tela.
+async function chamar(canal: string, args: unknown[]): Promise<unknown> {
+  const resposta = (await ipcRenderer.invoke(canal, ...args)) as Resposta<unknown>
+  if (!resposta.ok) throw new Error(resposta.erro)
+  return resposta.dados
 }
 
-contextBridge.exposeInMainWorld('bela', api)
+const api: Record<string, unknown> = {
+  registrarErro: (mensagem: string, detalhe?: string) =>
+    ipcRenderer.send(
+      CANAL_ERRO,
+      String(mensagem).slice(0, 2000),
+      detalhe === undefined ? undefined : String(detalhe).slice(0, 20000)
+    )
+}
+percorrerContrato(CONTRATO, (caminho, [canal]) => {
+  let grupo = api
+  for (const nome of caminho.slice(0, -1)) grupo = (grupo[nome] ??= {}) as Record<string, unknown>
+  grupo[caminho.at(-1)!] = (...args: unknown[]) => chamar(canal, args)
+})
+
+contextBridge.exposeInMainWorld('bela', api as unknown as ApiBela)

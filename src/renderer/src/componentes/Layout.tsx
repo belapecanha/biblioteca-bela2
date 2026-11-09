@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { LimiteErro } from './LimiteErro'
 
 const ABAS = [
   ['/perfil', 'Perfil'],
@@ -50,7 +51,10 @@ export function Layout() {
           </div>
         </div>
       </nav>
-      <Outlet />
+      {/* A chave recomeça o limite ao trocar de página, para o erro não seguir a navegação. */}
+      <LimiteErro key={pathname}>
+        <Outlet />
+      </LimiteErro>
     </div>
   )
 }

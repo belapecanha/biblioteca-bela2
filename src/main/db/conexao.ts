@@ -21,7 +21,7 @@ export function abrirBanco(caminho: string, pastaMigracoes: string): Banco {
   return { db, sqlite }
 }
 
-function semearClassificacoes(db: Banco['db']): void {
+export function semearClassificacoes(db: Banco['db']): void {
   const linhas = (Object.keys(LISTAS_CLASSIFICACAO) as TipoClassificacao[]).flatMap((tipo) =>
     LISTAS_CLASSIFICACAO[tipo].map((nome, ordem) => ({ tipo, nome, ordem }))
   )

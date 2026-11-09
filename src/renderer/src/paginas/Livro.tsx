@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import type { Posse, Status } from '@shared/api'
 import { GENEROS, MOODS, TEMAS, type TipoClassificacao } from '@shared/classificacoes'
 import { Capa, CartaoLivro, Estado } from '../componentes/Capa'
 import { Estrelas } from '../componentes/Estrelas'
-import { NOME_STATUS, useAcoesLivro, useLivro, useLivros } from '../dados'
+import { mensagemErro, NOME_STATUS, useAcoesLivro, useLivro, useLivros, useSalvar } from '../dados'
+import { ErroFormulario } from '../componentes/Formulario'
 import { RegistroLeitura } from '../componentes/RegistroLeitura'
 import { linkPais } from './Autoria'
 import { OrganizarLivro } from '../componentes/OrganizarLivro'
@@ -21,6 +22,8 @@ export function Livro() {
   const todos = useLivros()
   const acoes = useAcoesLivro()
   const [editando, setEditando] = useState(false)
+  const navegar = useNavigate()
+  const excluir = useSalvar((livroId: number) => window.bela.livros.excluir(livroId))
 
   const livro = consulta.data
   if (!livro) {
@@ -28,7 +31,9 @@ export function Livro() {
       return (
         <main className="wrap embreve">
           <h1>Livro não encontrado</h1>
-          <Link className="btn btn2" to="/livros">Ver todos os livros</Link>
+          <Link className="btn btn2" to="/livros">
+            Ver todos os livros
+          </Link>
         </main>
       )
     }
@@ -36,20 +41,35 @@ export function Livro() {
   }
 
   const lista = todos.data ?? []
-  const daSerie = livro.serie ? lista.filter((l) => l.serie?.id === livro.serie!.id && l.id !== id).sort((a, b) => (a.volume ?? 0) - (b.volume ?? 0)) : []
+  const daSerie = livro.serie
+    ? lista
+        .filter((l) => l.serie?.id === livro.serie!.id && l.id !== id)
+        .sort((a, b) => (a.volume ?? 0) - (b.volume ?? 0))
+    : []
   const principal = livro.autores[0]
   const doAutor = principal
-    ? lista.filter((l) => l.id !== id && l.autores.some((a) => a.id === principal.id) && l.serie?.id !== livro.serie?.id)
+    ? lista.filter(
+        (l) => l.id !== id && l.autores.some((a) => a.id === principal.id) && l.serie?.id !== livro.serie?.id
+      )
     : []
   const dados = [
     livro.paginas ? `${livro.paginas}${livro.paginasEstimadas ? ' páginas (estimadas)' : ' páginas'}` : null,
-    livro.formato === 'ebook' ? 'E-book' : livro.formato === 'fisico' ? 'Físico' : livro.formato === 'audiolivro' ? 'Audiolivro' : null,
+    livro.formato === 'ebook'
+      ? 'E-book'
+      : livro.formato === 'fisico'
+        ? 'Físico'
+        : livro.formato === 'audiolivro'
+          ? 'Audiolivro'
+          : null,
     livro.isbn13 ? `ISBN ${livro.isbn13}` : null
   ].filter(Boolean) as string[]
   const lugares = [
-    ...(livro.editora ? [{ texto: livro.editora.nome, para: `/editora/${livro.editora.id}`, rotulo: `Editora ${livro.editora.nome}` }] : []),
-    ...[...new Set([livro.paisEditora, ...livro.autores.map((a) => a.pais)].filter((p): p is string => !!p))]
-      .map((p) => ({ texto: p, para: linkPais(p), rotulo: `País ${p}` }))
+    ...(livro.editora
+      ? [{ texto: livro.editora.nome, para: `/editora/${livro.editora.id}`, rotulo: `Editora ${livro.editora.nome}` }]
+      : []),
+    ...[...new Set([livro.paisEditora, ...livro.autores.map((a) => a.pais)].filter((p): p is string => !!p))].map(
+      (p) => ({ texto: p, para: linkPais(p), rotulo: `País ${p}` })
+    )
   ]
 
   const alternar = (tipo: TipoClassificacao, atuais: string[], nome: string) =>
@@ -68,7 +88,9 @@ export function Livro() {
       <main className="wrap ficha">
         <aside className="ficha-lado">
           <Capa livro={livro} grande />
-          <Link className="btn btn2" to={`/livro/${id}/editar`}>Editar dados e capa</Link>
+          <Link className="btn btn2" to={`/livro/${id}/editar`}>
+            Editar dados e capa
+          </Link>
           <div className="card coluna">
             {livro.status === 'quero_ler' ? (
               <p className="peq muted sem-margem">A nota fica disponível quando você começar a leitura.</p>
@@ -77,18 +99,35 @@ export function Livro() {
                 <span className="rot">Sua nota</span>
                 <Estrelas grande nota={livro.nota} aoMudar={(nota) => acoes.nota.mutate({ id, nota })} />
                 <p className="peq muted sem-margem">
-                  {livro.nota ? `${String(livro.nota).replace('.', ',')} de 5. Clique de novo para apagar.` : 'Clique na metade da estrela para meia nota.'}
+                  {livro.nota && livro.leituras[0]?.nota == null
+                    ? `${String(livro.nota).replace('.', ',')} de 5, da leitura anterior. A nota que você der agora vale para a leitura atual.`
+                    : livro.nota
+                      ? `${String(livro.nota).replace('.', ',')} de 5. Clique de novo para apagar.`
+                      : 'Clique na metade da estrela para meia nota.'}
                 </p>
               </div>
             )}
             <div>
-              <label className="rot" htmlFor="status">Status</label>
-              <select id="status" className="campo larga" value={livro.status} onChange={(e) => acoes.status.mutate({ id, status: e.target.value as Status })}>
-                {Object.entries(NOME_STATUS).map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+              <label className="rot" htmlFor="status">
+                Status
+              </label>
+              <select
+                id="status"
+                className="campo larga"
+                value={livro.status}
+                onChange={(e) => acoes.status.mutate({ id, status: e.target.value as Status })}
+              >
+                {Object.entries(NOME_STATUS).map(([v, n]) => (
+                  <option key={v} value={v}>
+                    {n}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="rot" htmlFor="posse">Na minha estante</label>
+              <label className="rot" htmlFor="posse">
+                Na minha estante
+              </label>
               <select
                 id="posse"
                 className="campo larga"
@@ -102,10 +141,30 @@ export function Livro() {
               </select>
             </div>
             {(acoes.status.isError || acoes.nota.isError || acoes.posse.isError || acoes.classificacoes.isError) && (
-              <p className="erro peq sem-margem" role="alert">Não foi possível salvar. Tente de novo.</p>
+              <p className="erro peq sem-margem" role="alert">
+                {mensagemErro(
+                  acoes.status.error ?? acoes.nota.error ?? acoes.posse.error ?? acoes.classificacoes.error
+                )}
+              </p>
             )}
           </div>
           <OrganizarLivro key={id} livro={livro} />
+          <button
+            type="button"
+            className="btn btn2 perigo"
+            disabled={excluir.isPending}
+            onClick={() => {
+              const extra = livro.leituras.length
+                ? ` As ${livro.leituras.length} leituras, notas, resenhas, citações e o progresso também serão apagados.`
+                : ''
+              if (window.confirm(`Excluir "${livro.titulo}" da biblioteca?${extra} Esta ação não pode ser desfeita.`)) {
+                excluir.mutate(id, { onSuccess: () => navegar('/livros', { replace: true }) })
+              }
+            }}
+          >
+            {excluir.isPending ? 'Excluindo…' : 'Excluir livro'}
+          </button>
+          <ErroFormulario erro={excluir.error} />
         </aside>
         <div className="ficha-corpo">
           <section>
@@ -116,7 +175,9 @@ export function Livro() {
               {livro.autores.map((a, i) => (
                 <span key={a.id}>
                   {i > 0 && ', '}
-                  <Link className="link" to={`/autor/${a.id}`}>{a.nome}</Link>
+                  <Link className="link" to={`/autor/${a.id}`}>
+                    {a.nome}
+                  </Link>
                 </span>
               ))}
               {livro.anoPublicacao && <span className="muted"> ({livro.anoPublicacao})</span>}
@@ -124,14 +185,23 @@ export function Livro() {
             {livro.serie && (
               <p className="sem-margem">
                 <Link className="link" to={`/serie/${livro.serie.id}`}>
-                  {livro.serie.nome}{livro.volume ? `, volume ${String(livro.volume).replace('.', ',')}` : ''}
+                  {livro.serie.nome}
+                  {livro.volume ? `, volume ${String(livro.volume).replace('.', ',')}` : ''}
                 </Link>
               </p>
             )}
             <p className="sinopse">{livro.sinopse ?? 'Sinopse ainda não cadastrada.'}</p>
             <div className="linha">
-              {dados.map((d) => <span className="chip" key={d}>{d}</span>)}
-              {lugares.map((l) => <Link className="chip chip-link" key={l.para} to={l.para} aria-label={l.rotulo}>{l.texto}</Link>)}
+              {dados.map((d) => (
+                <span className="chip" key={d}>
+                  {d}
+                </span>
+              ))}
+              {lugares.map((l) => (
+                <Link className="chip chip-link" key={l.para} to={l.para} aria-label={l.rotulo}>
+                  {l.texto}
+                </Link>
+              ))}
             </div>
           </section>
 
@@ -161,7 +231,11 @@ export function Livro() {
                               {nome}
                             </button>
                           ))
-                        : atuais.map((nome) => <span className="chip" key={nome}>{nome}</span>)}
+                        : atuais.map((nome) => (
+                            <span className="chip" key={nome}>
+                              {nome}
+                            </span>
+                          ))}
                       {!editando && !atuais.length && <span className="muted peq">Nenhum</span>}
                     </div>
                   </div>
@@ -174,14 +248,26 @@ export function Livro() {
 
           {daSerie.length > 0 && (
             <section>
-              <div className="sec"><h2>Nesta série</h2></div>
-              <div className="grade">{daSerie.map((l) => <CartaoLivro key={l.id} livro={l} />)}</div>
+              <div className="sec">
+                <h2>Nesta série</h2>
+              </div>
+              <div className="grade">
+                {daSerie.map((l) => (
+                  <CartaoLivro key={l.id} livro={l} />
+                ))}
+              </div>
             </section>
           )}
           {doAutor.length > 0 && principal && (
             <section>
-              <div className="sec"><h2>Mais de {principal.nome}</h2></div>
-              <div className="grade">{doAutor.slice(0, 12).map((l) => <CartaoLivro key={l.id} livro={l} />)}</div>
+              <div className="sec">
+                <h2>Mais de {principal.nome}</h2>
+              </div>
+              <div className="grade">
+                {doAutor.slice(0, 12).map((l) => (
+                  <CartaoLivro key={l.id} livro={l} />
+                ))}
+              </div>
             </section>
           )}
         </div>

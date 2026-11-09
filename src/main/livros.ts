@@ -1,7 +1,14 @@
-import { POSSES, STATUS } from '@shared/api'
-import type { Autor, Citacao, Colaborador, Leitura, LivroDetalhe, LivroResumo, Posse, Progresso, Status } from '@shared/api'
+import { desc, eq, sql } from 'drizzle-orm'
+import { citacoes, editoras } from './db/esquema'
+import { POSSES, STATUS, STATUS_EM_ANDAMENTO } from '@shared/dominio'
+import { dataLocal } from '@shared/datas'
+import type { Autor, Colaborador, Leitura, LivroDetalhe, LivroResumo, Posse, Progresso, Status } from '@shared/api'
 import { LISTAS_CLASSIFICACAO, type TipoClassificacao } from '@shared/classificacoes'
 import type { Banco } from './db/conexao'
+import { limparOrfaos } from './entidades'
+import { apagarSeOrfas } from './imagens'
+import { recalcularStatus, ultimaLeitura } from './status'
+import { idValido, notaValida, opcao, opcaoOuNulo } from './validacao'
 
 interface LinhaLivro {
   id: number
@@ -33,7 +40,8 @@ interface LinhaLivro {
 
 const SELECAO = `
   SELECT l.*, s.nome AS serie, e.nome AS editora, e.pais AS pais_editora,
-    (SELECT nota FROM leituras x WHERE x.livro_id = l.id ORDER BY x.id DESC LIMIT 1) AS nota,
+    -- Nota da leitura mais recente que tem nota: uma releitura recém-começada não apaga as estrelas.
+    (SELECT nota FROM leituras x WHERE x.livro_id = l.id AND x.nota IS NOT NULL ORDER BY x.id DESC LIMIT 1) AS nota,
     (SELECT data_fim FROM leituras x WHERE x.livro_id = l.id AND x.status = 'lido' ORDER BY x.id DESC LIMIT 1) AS data_lida,
     (SELECT ano_fim FROM leituras x WHERE x.livro_id = l.id AND x.status = 'lido' ORDER BY x.id DESC LIMIT 1) AS ano_lido
   FROM livros l LEFT JOIN series s ON s.id = l.serie_id LEFT JOIN editoras e ON e.id = l.editora_id`
@@ -48,21 +56,28 @@ function agrupar<T>(linhas: (T & { livro_id: number })[]): Map<number, T[]> {
   return mapa
 }
 
-export function listarLivros({ sqlite }: Banco, filtroId?: number): LivroResumo[] {
-  const onde = filtroId === undefined ? '' : ' WHERE l.id = ?'
-  const parametros = filtroId === undefined ? [] : [filtroId]
+// Sem filtro, a biblioteca inteira; com um id ou uma lista de ids, só esses livros.
+export function listarLivros({ sqlite }: Banco, filtro?: number | number[]): LivroResumo[] {
+  const ids = filtro === undefined ? undefined : Array.isArray(filtro) ? filtro : [filtro]
+  if (ids && !ids.length) return []
+  const onde = ids ? ' WHERE l.id IN (SELECT value FROM json_each(?))' : ''
+  const parametros = ids ? [JSON.stringify(ids)] : []
   const linhas = sqlite.prepare(`${SELECAO}${onde} ORDER BY l.titulo COLLATE NOCASE`).all(...parametros) as LinhaLivro[]
 
   const autores = agrupar(
     sqlite
-      .prepare(`SELECT x.livro_id, a.id, a.nome, a.pais FROM livro_autores x JOIN autores a ON a.id = x.autor_id
-        WHERE x.papel = 'autor' ${filtroId === undefined ? '' : 'AND x.livro_id = ?'} ORDER BY x.ordem`)
+      .prepare(
+        `SELECT x.livro_id, a.id, a.nome, a.pais FROM livro_autores x JOIN autores a ON a.id = x.autor_id
+        WHERE x.papel = 'autor' ${ids ? 'AND x.livro_id IN (SELECT value FROM json_each(?))' : ''} ORDER BY x.ordem`
+      )
       .all(...parametros) as (Autor & { livro_id: number })[]
   )
   const classes = agrupar(
     sqlite
-      .prepare(`SELECT x.livro_id, c.tipo, c.nome FROM livro_classificacoes x JOIN classificacoes c ON c.id = x.classificacao_id
-        ${filtroId === undefined ? '' : 'WHERE x.livro_id = ?'} ORDER BY x.ordem`)
+      .prepare(
+        `SELECT x.livro_id, c.tipo, c.nome FROM livro_classificacoes x JOIN classificacoes c ON c.id = x.classificacao_id
+        ${ids ? 'WHERE x.livro_id IN (SELECT value FROM json_each(?))' : ''} ORDER BY x.ordem`
+      )
       .all(...parametros) as { livro_id: number; tipo: TipoClassificacao; nome: string }[]
   )
 
@@ -104,12 +119,24 @@ export function obterLivro(banco: Banco, id: number): LivroDetalhe | null {
   const resumo = listarLivros(banco, id)[0]
   if (!resumo) return null
   const extra = banco.sqlite
-    .prepare(`SELECT l.sinopse, l.ano_publicacao, l.ano_edicao, l.isbn13, l.isbn10, l.idioma, l.notas_privadas
-      FROM livros l WHERE l.id = ?`)
-    .get(id) as { sinopse: string | null; ano_publicacao: number | null; ano_edicao: number | null; isbn13: string | null; isbn10: string | null; idioma: string | null; notas_privadas: string | null; }
+    .prepare(
+      `SELECT l.sinopse, l.ano_publicacao, l.ano_edicao, l.isbn13, l.isbn10, l.idioma, l.notas_privadas
+      FROM livros l WHERE l.id = ?`
+    )
+    .get(id) as {
+    sinopse: string | null
+    ano_publicacao: number | null
+    ano_edicao: number | null
+    isbn13: string | null
+    isbn10: string | null
+    idioma: string | null
+    notas_privadas: string | null
+  }
   const leituras = banco.sqlite
-    .prepare(`SELECT id, status, formato, data_inicio AS dataInicio, data_fim AS dataFim, ano_fim AS anoFim, precisao_fim AS precisaoFim, nota, resenha
-      FROM leituras WHERE livro_id = ? ORDER BY id DESC`)
+    .prepare(
+      `SELECT id, status, formato, data_inicio AS dataInicio, data_fim AS dataFim, ano_fim AS anoFim, precisao_fim AS precisaoFim, nota, resenha
+      FROM leituras WHERE livro_id = ? ORDER BY id DESC`
+    )
     .all(id) as Leitura[]
   return {
     ...resumo,
@@ -120,38 +147,45 @@ export function obterLivro(banco: Banco, id: number): LivroDetalhe | null {
     isbn10: extra.isbn10,
     idioma: extra.idioma,
     notasPrivadas: extra.notas_privadas,
-    colaboradores: banco.sqlite.prepare(`SELECT a.nome, a.pais, x.papel FROM livro_autores x JOIN autores a ON a.id = x.autor_id WHERE x.livro_id = ? ORDER BY x.ordem`).all(id) as Colaborador[],
+    colaboradores: banco.sqlite
+      .prepare(
+        `SELECT a.nome, a.pais, x.papel FROM livro_autores x JOIN autores a ON a.id = x.autor_id WHERE x.livro_id = ? ORDER BY x.ordem`
+      )
+      .all(id) as Colaborador[],
     leituras,
-    progresso: banco.sqlite.prepare(`SELECT p.id, p.leitura_id AS leituraId, p.data, p.pagina FROM progresso p JOIN leituras l ON l.id = p.leitura_id WHERE l.livro_id = ? ORDER BY p.data DESC, p.id DESC`).all(id) as Progresso[],
-    citacoes: banco.sqlite.prepare('SELECT id, texto, pagina FROM citacoes WHERE livro_id = ? ORDER BY id DESC').all(id) as Citacao[]
+    progresso: banco.sqlite
+      .prepare(
+        `SELECT p.id, p.leitura_id AS leituraId, p.data, p.pagina FROM progresso p JOIN leituras l ON l.id = p.leitura_id WHERE l.livro_id = ? ORDER BY p.data DESC, p.id DESC`
+      )
+      .all(id) as Progresso[],
+    citacoes: banco.db
+      .select({ id: citacoes.id, texto: citacoes.texto, pagina: citacoes.pagina })
+      .from(citacoes)
+      .where(eq(citacoes.livroId, id))
+      .orderBy(desc(citacoes.id))
+      .all()
   }
 }
 
-function exigirId(id: unknown): number {
-  if (!Number.isInteger(id) || (id as number) <= 0) throw new Error('Livro inválido.')
-  return id as number
-}
-
+// A nota vai para a leitura atual (a mais recente).
 export function definirNota({ sqlite }: Banco, id: number, nota: number | null): void {
-  exigirId(id)
-  if (nota !== null && !(Number.isFinite(nota) && nota >= 0.5 && nota <= 5 && Number.isInteger(nota * 2))) {
-    throw new Error('Nota inválida.')
-  }
-  const leitura = sqlite
-    .prepare(`SELECT id FROM leituras WHERE livro_id = ? ORDER BY id DESC LIMIT 1`)
-    .get(id) as { id: number } | undefined
+  idValido(id)
+  const valor = notaValida(nota)
+  const leitura = ultimaLeitura(sqlite, id)
   if (!leitura) throw new Error('Registre uma leitura antes de dar a nota.')
-  sqlite.prepare('UPDATE leituras SET nota = ? WHERE id = ?').run(nota, leitura.id)
+  sqlite.prepare('UPDATE leituras SET nota = ? WHERE id = ?').run(valor, leitura.id)
 }
 
-export function definirStatus({ sqlite }: Banco, id: number, status: Status, hoje = dataDeHoje()): void {
-  exigirId(id)
-  if (!STATUS.includes(status)) throw new Error('Status inválido.')
+export function definirStatus({ sqlite }: Banco, id: number, status: Status, hoje = dataLocal()): void {
+  idValido(id)
+  opcao(STATUS, status, 'Status')
 
   sqlite.transaction(() => {
     const aberta = sqlite
-      .prepare(`SELECT id FROM leituras WHERE livro_id = ? AND status IN ('lendo', 'pausado', 'abandonado')
-        AND id = (SELECT MAX(id) FROM leituras WHERE livro_id = ?) LIMIT 1`)
+      .prepare(
+        `SELECT id FROM leituras WHERE livro_id = ? AND status IN ('lendo', 'pausado', 'abandonado')
+        AND id = (SELECT MAX(id) FROM leituras WHERE livro_id = ?) LIMIT 1`
+      )
       .get(id, id) as { id: number } | undefined
     const jaLido = sqlite.prepare(`SELECT 1 FROM leituras WHERE livro_id = ? AND status = 'lido' LIMIT 1`).get(id)
     const inserir = sqlite.prepare('INSERT INTO leituras (livro_id, status) VALUES (?, ?)')
@@ -167,44 +201,47 @@ export function definirStatus({ sqlite }: Banco, id: number, status: Status, hoj
     } else if (status === 'quero_ler') {
       // Só descarta uma leitura aberta que ainda não tem nada registrado.
       sqlite
-        .prepare(`DELETE FROM leituras WHERE livro_id = ? AND status IN ('lendo', 'pausado', 'abandonado') AND nota IS NULL AND resenha IS NULL
+        .prepare(
+          `DELETE FROM leituras WHERE livro_id = ? AND status IN ('lendo', 'pausado', 'abandonado') AND nota IS NULL AND resenha IS NULL
           AND data_inicio IS NULL AND data_fim IS NULL AND ano_fim IS NULL
-          AND NOT EXISTS (SELECT 1 FROM progresso p WHERE p.leitura_id = leituras.id)`)
+          AND NOT EXISTS (SELECT 1 FROM progresso p WHERE p.leitura_id = leituras.id)`
+        )
         .run(id)
+      const ultima = ultimaLeitura(sqlite, id)
+      if (ultima && STATUS_EM_ANDAMENTO.includes(ultima.status)) {
+        throw new Error(
+          'A leitura em andamento já tem dados registrados (datas, nota, resenha ou progresso). Abandone-a ou exclua-a no histórico antes de voltar para Quero ler.'
+        )
+      }
     } else if (aberta) {
       sqlite.prepare('UPDATE leituras SET status = ? WHERE id = ?').run(status, aberta.id)
     } else {
       inserir.run(id, status)
     }
 
-    sqlite.prepare(`UPDATE livros SET status = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?`).run(status, id)
-    if (status === 'quero_ler') {
-      sqlite
-        .prepare('INSERT OR IGNORE INTO fila_meta (livro_id, posicao) SELECT ?, COALESCE(MAX(posicao), -1) + 1 FROM fila_meta')
-        .run(id)
-    } else {
-      sqlite.prepare('DELETE FROM fila_meta WHERE livro_id = ?').run(id)
-    }
+    recalcularStatus(sqlite, id, status)
   })()
 }
 
 export function definirPosse({ sqlite }: Banco, ids: number[], posse: Posse | null): void {
   if (!Array.isArray(ids)) throw new Error('Lista inválida.')
-  ids.forEach(exigirId)
-  if (posse !== null && !POSSES.includes(posse)) throw new Error('Posse inválida.')
+  ids.forEach(idValido)
+  opcaoOuNulo(POSSES, posse, 'Posse')
   const atualizar = sqlite.prepare('UPDATE livros SET posse = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?')
   sqlite.transaction(() => ids.forEach((id) => atualizar.run(posse, id)))()
 }
 
 export function definirClassificacoes({ sqlite }: Banco, id: number, tipo: TipoClassificacao, nomes: string[]): void {
-  exigirId(id)
+  idValido(id)
   const permitidos = LISTAS_CLASSIFICACAO[tipo]
   if (!permitidos) throw new Error('Tipo inválido.')
   if (!Array.isArray(nomes) || nomes.some((n) => !permitidos.includes(n))) throw new Error('Classificação inválida.')
 
   sqlite.transaction(() => {
     sqlite
-      .prepare(`DELETE FROM livro_classificacoes WHERE livro_id = ? AND classificacao_id IN (SELECT id FROM classificacoes WHERE tipo = ?)`)
+      .prepare(
+        `DELETE FROM livro_classificacoes WHERE livro_id = ? AND classificacao_id IN (SELECT id FROM classificacoes WHERE tipo = ?)`
+      )
       .run(id, tipo)
     const inserir = sqlite.prepare(`INSERT INTO livro_classificacoes (livro_id, classificacao_id, ordem)
       SELECT ?, id, ? FROM classificacoes WHERE tipo = ? AND nome = ?`)
@@ -212,7 +249,30 @@ export function definirClassificacoes({ sqlite }: Banco, id: number, tipo: TipoC
   })()
 }
 
-function dataDeHoje(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+export function listarEditoras({ db }: Banco): { nome: string; pais: string | null }[] {
+  return db
+    .select({ nome: editoras.nome, pais: editoras.pais })
+    .from(editoras)
+    .orderBy(sql`${editoras.nome} COLLATE NOCASE`)
+    .all()
+}
+
+// Apaga o livro e tudo o que é dele (leituras, progresso, citações, listas: ON DELETE CASCADE).
+// Autores, editora e série sem outros livros saem junto; as imagens, depois do commit.
+export function excluirLivro(banco: Banco, pastaDados: string, id: number): void {
+  idValido(id)
+  const { sqlite } = banco
+  const imagens = sqlite.transaction(() => {
+    const livro = sqlite
+      .prepare('SELECT capa_arquivo capa, miniatura_arquivo miniatura FROM livros WHERE id = ?')
+      .get(id) as { capa: string | null; miniatura: string | null } | undefined
+    if (!livro) throw new Error('Livro não encontrado.')
+    sqlite.prepare('DELETE FROM livros WHERE id = ?').run(id)
+    limparOrfaos(sqlite)
+    return [
+      { pasta: 'capas' as const, nome: livro.capa ?? '' },
+      { pasta: 'miniaturas' as const, nome: livro.miniatura ?? '' }
+    ]
+  })()
+  apagarSeOrfas(sqlite, pastaDados, imagens)
 }

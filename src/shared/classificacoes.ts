@@ -64,7 +64,8 @@ export const MOODS = [
   'Angustiante'
 ] as const
 
-export type TipoClassificacao = 'genero' | 'tema' | 'mood'
+export const TIPOS_CLASSIFICACAO = ['genero', 'tema', 'mood'] as const
+export type TipoClassificacao = (typeof TIPOS_CLASSIFICACAO)[number]
 
 export const LISTAS_CLASSIFICACAO: Record<TipoClassificacao, readonly string[]> = {
   genero: GENEROS,
